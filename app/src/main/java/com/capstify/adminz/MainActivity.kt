@@ -35,45 +35,97 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import android.content.Context
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.foundation.Image
+import androidx.compose.ui.layout.ContentScale
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.graphics.BitmapFactory
+import android.net.Uri
 
-private val Bg = Color(0xFF101218)
-private val Panel = Color(0xFF1B1F29)
-private val Panel2 = Color(0xFF232936)
-private val Accent = Color(0xFF9BCB45)
-private val Muted = Color(0xFFAAA8B6)
-private val Danger = Color(0xFFFF7777)
-private val Info = Color(0xFF83B9FF)
-private val pages = listOf("Dashboard", "Produk & Kode", "Atur Stok", "Pesanan", "Tempat Sampah", "Rekap Penjualan", "Backup Data")
+private var Bg by mutableStateOf(Color(0xFF101218))
+private var Panel by mutableStateOf(Color(0xFF1B1F29))
+private var Panel2 by mutableStateOf(Color(0xFF232936))
+private var Accent by mutableStateOf(Color(0xFF9BCB45))
+private var Muted by mutableStateOf(Color(0xFFAAA8B6))
+private var Danger by mutableStateOf(Color(0xFFFF7777))
+private var Info by mutableStateOf(Color(0xFF83B9FF))
+private var TextColor by mutableStateOf(Color.White)
+private var SelectedFont by mutableStateOf("Default")
+private var BackgroundImage by mutableStateOf("")
+private val pages = listOf(
+    "Dashboard",
+    "Produk & Kode",
+    "Atur Stok",
+    "Pesanan",
+    "Tempat Sampah",
+    "Rekap Penjualan",
+    "Backup Data",
+    "Pengaturan Tema"
+)
+private fun saveTheme(context: Context) {
+    val pref = context.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE)
+    pref.edit()
+        .putLong("bg", Bg.value.toLong())
+        .putLong("panel", Panel.value.toLong())
+        .putLong("panel2", Panel2.value.toLong())
+        .putLong("accent", Accent.value.toLong())
+        .putLong("muted", Muted.value.toLong())
+        .putLong("text", TextColor.value.toLong())
+        .putString("font", SelectedFont)
+        .putString("background_image", BackgroundImage)
+        .apply()
+}
+
+private fun loadTheme(context: Context) {
+    val pref = context.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE)
+
+    fun color(key: String, default: Color): Color {
+        val value = pref.getLong(key, default.value.toLong())
+        return Color(value.toULong())
+    }
+
+    Bg = color("bg", Color(0xFF101218))
+    Panel = color("panel", Color(0xFF1B1F29))
+    Panel2 = color("panel2", Color(0xFF232936))
+    Accent = color("accent", Color(0xFF9BCB45))
+    Muted = color("muted", Color(0xFFAAA8B6))
+    TextColor = color("text", Color.White)
+    SelectedFont = pref.getString("font", "Default") ?: "Default"
+    BackgroundImage = pref.getString("background_image", "") ?: ""
+}
+
+private fun resetTheme(context: Context) {
+    Bg = Color(0xFF101218)
+    Panel = Color(0xFF1B1F29)
+    Panel2 = Color(0xFF232936)
+    Accent = Color(0xFF9BCB45)
+    Muted = Color(0xFFAAA8B6)
+    TextColor = Color.White
+    SelectedFont = "Default"
+    BackgroundImage = ""
+    saveTheme(context)
+}
+
+private fun selectedFontFamily(): FontFamily {
+    return when (SelectedFont) {
+        "Sans Serif" -> FontFamily.SansSerif
+        "Serif" -> FontFamily.Serif
+        "Monospace" -> FontFamily.Monospace
+        "Cursive" -> FontFamily.Cursive
+        else -> FontFamily.Default
+    }
+}
 
 data class Product(val id:Int, val sku:String, val name:String, val variant:String, val price:Double, val stock:Int)
 data class OrderRow(val id:Int, val number:String, val platform:String, val total:Double, val payment:String, val status:String, val tracking:String, val count:Int, val created:String)
 
 class MainActivity : ComponentActivity() {
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        val api = CapstifyApi(this)
-        setContent {
-            MaterialTheme(colorScheme = darkColorScheme(
-    background = Bg,
-    surface = Panel,
-    primary = Accent,
-    onPrimary = Color.White,
-    onBackground = Color.White,
-    onSurface = Color.White,
-    secondary = Muted,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onPrimaryContainer = Color.White,
-    onSecondaryContainer = Color.White,
-    onTertiaryContainer = Color.White,
-    onError = Color.White,
-    error = Danger,
-    surfaceVariant = Panel2,
-    onSurfaceVariant = Color.White
-)) { CapstifyApp(api) }
-        }
-    }
-}
+    
 
 @Composable
 private fun CapstifyApp(api: CapstifyApi) {
@@ -147,13 +199,14 @@ private fun CapstifyApp(api: CapstifyApi) {
                 }
             }
             when(page) {
-                "Dashboard" -> DashboardScreen(stats, busy, message, {loadDashboard()}, {go(it)})
-                "Produk & Kode" -> ProductScreen(api)
-                "Atur Stok" -> StockScreen(api)
-                "Pesanan" -> OrdersScreen(api, false)
-                "Tempat Sampah" -> OrdersScreen(api, true)
-                "Rekap Penjualan" -> ReportsScreen(api)
-                "Backup Data" -> BackupScreen(api)
+    "Dashboard" -> DashboardScreen(stats, busy, message, {loadDashboard()}, {go(it)})
+    "Produk & Kode" -> ProductScreen(api)
+    "Atur Stok" -> StockScreen(api)
+    "Pesanan" -> OrdersScreen(api, false)
+    "Tempat Sampah" -> OrdersScreen(api, true)
+    "Rekap Penjualan" -> ReportsScreen(api)
+    "Backup Data" -> BackupScreen(api)
+    "Pengaturan Tema" -> ThemeSettingsScreen()
             }
         }
     }
@@ -538,5 +591,301 @@ private fun Field(label:String,value:String,onValue:(String)->Unit,numeric:Boole
 private fun ReportCard(label:String,value:String){
     Card(Modifier.fillMaxWidth().padding(vertical=4.dp),colors=CardDefaults.cardColors(containerColor=Panel)){
         Column(Modifier.padding(15.dp)){Text(label,color=Muted,fontSize=12.sp);Text(value,fontSize=22.sp,fontWeight=FontWeight.Bold)}
+    }
+}
+
+@Composable
+private fun ThemeSettingsScreen() {
+    val context = LocalContext.current
+
+    var bgHex by remember { mutableStateOf("#101218") }
+    var panelHex by remember { mutableStateOf("#1B1F29") }
+    var accentHex by remember { mutableStateOf("#9BCB45") }
+    var textHex by remember { mutableStateOf("#FFFFFF") }
+    var fontMenu by remember { mutableStateOf(false) }
+
+    val imagePicker = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            try {
+                context.contentResolver.takePersistableUriPermission(
+                    uri,
+                    android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+            } catch (_: Exception) {}
+
+            BackgroundImage = uri.toString()
+            saveTheme(context)
+        }
+    }
+
+    fun updateColor(value: String, target: String) {
+        try {
+            val parsed = Color(android.graphics.Color.parseColor(value))
+            when (target) {
+                "bg" -> Bg = parsed
+                "panel" -> Panel = parsed
+                "accent" -> Accent = parsed
+                "text" -> TextColor = parsed
+            }
+            saveTheme(context)
+        } catch (_: Exception) {}
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        Text(
+            "Pengaturan Tema",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        Text(
+            "Sesuaikan tampilan Capstify-Admin Z.",
+            color = Muted,
+            fontSize = 12.sp
+        )
+
+        Spacer(Modifier.height(18.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Panel
+            )
+        ) {
+            Column(Modifier.padding(15.dp)) {
+                Text("Warna Tampilan", fontWeight = FontWeight.Bold)
+
+                Spacer(Modifier.height(10.dp))
+
+                OutlinedTextField(
+                    value = bgHex,
+                    onValueChange = {
+                        bgHex = it
+                        updateColor(it, "bg")
+                    },
+                    label = { Text("Warna Background") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = panelHex,
+                    onValueChange = {
+                        panelHex = it
+                        updateColor(it, "panel")
+                    },
+                    label = { Text("Warna Panel / Card") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = accentHex,
+                    onValueChange = {
+                        accentHex = it
+                        updateColor(it, "accent")
+                    },
+                    label = { Text("Warna Aksen") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = textHex,
+                    onValueChange = {
+                        textHex = it
+                        updateColor(it, "text")
+                    },
+                    label = { Text("Warna Teks") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text(
+                    "Gunakan format HEX, contoh: #FFFFFF",
+                    color = Muted,
+                    fontSize = 11.sp,
+                    modifier = Modifier.padding(top = 5.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Panel
+            )
+        ) {
+            Column(Modifier.padding(15.dp)) {
+                Text("Pilihan Font", fontWeight = FontWeight.Bold)
+
+                Spacer(Modifier.height(8.dp))
+
+                Box {
+                    OutlinedButton(
+                        onClick = { fontMenu = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            SelectedFont,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Icon(Icons.Default.ArrowDropDown, null)
+                    }
+
+                    DropdownMenu(
+                        expanded = fontMenu,
+                        onDismissRequest = { fontMenu = false }
+                    ) {
+                        listOf(
+                            "Default",
+                            "Sans Serif",
+                            "Serif",
+                            "Monospace",
+                            "Cursive"
+                        ).forEach { font ->
+                            DropdownMenuItem(
+                                text = { Text(font) },
+                                onClick = {
+                                    SelectedFont = font
+                                    fontMenu = false
+                                    saveTheme(context)
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Text(
+                    "Contoh tampilan teks Capstify-Admin Z",
+                    fontFamily = selectedFontFamily(),
+                    color = TextColor,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(top = 12.dp)
+                )
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Panel
+            )
+        ) {
+            Column(Modifier.padding(15.dp)) {
+                Text("Background Gambar", fontWeight = FontWeight.Bold)
+
+                Text(
+                    "Pilih gambar dari galeri perangkat.",
+                    color = Muted,
+                    fontSize = 12.sp
+                )
+
+                Spacer(Modifier.height(10.dp))
+
+                Button(
+                    onClick = {
+                        imagePicker.launch(arrayOf("image/*"))
+                    },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Icon(Icons.Default.Image, null)
+                    Spacer(Modifier.width(7.dp))
+                    Text("Pilih Gambar dari Galeri")
+                }
+
+                if (BackgroundImage.isNotBlank()) {
+                    Text(
+                        "Gambar latar sudah dipilih.",
+                        color = Accent,
+                        fontSize = 12.sp,
+                        modifier = Modifier.padding(top = 8.dp)
+                    )
+
+                    TextButton(
+                        onClick = {
+                            BackgroundImage = ""
+                            saveTheme(context)
+                        }
+                    ) {
+                        Text("Hapus Pilihan Gambar")
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        Card(
+            colors = CardDefaults.cardColors(
+                containerColor = Panel2
+            )
+        ) {
+            Column(Modifier.padding(15.dp)) {
+                Text("Preview Tema", fontWeight = FontWeight.Bold)
+
+                Spacer(Modifier.height(10.dp))
+
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Bg
+                    )
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Capstify-Admin Z",
+                            color = TextColor,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp
+                        )
+
+                        Text(
+                            "Contoh teks sekunder",
+                            color = Muted,
+                            fontSize = 12.sp
+                        )
+
+                        Spacer(Modifier.height(10.dp))
+
+                        Button(
+                            onClick = {},
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Accent
+                            )
+                        ) {
+                            Text("Contoh Tombol")
+                        }
+                    }
+                }
+            }
+        }
+
+        Spacer(Modifier.height(18.dp))
+
+        OutlinedButton(
+            onClick = {
+                resetTheme(context)
+
+                bgHex = "#101218"
+                panelHex = "#1B1F29"
+                accentHex = "#9BCB45"
+                textHex = "#FFFFFF"
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(Icons.Default.RestartAlt, null)
+            Spacer(Modifier.width(7.dp))
+            Text("Reset ke Tema Default")
+        }
+
+        Spacer(Modifier.height(20.dp))
     }
 }
