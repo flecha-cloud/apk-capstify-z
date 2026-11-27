@@ -485,11 +485,33 @@ private fun ThemeSettings() {
     var bg by remember { mutableStateOf("#101218") }; var panel by remember { mutableStateOf("#1B1F29") }
     var text by remember { mutableStateOf("#FFFFFF") }; var accent by remember { mutableStateOf("#9BCB45") }
     var fontMenu by remember { mutableStateOf(false) }
-    fun apply(raw: String, set: (Color) -> Unit) {
-        val h = raw.removePrefix("#")
-        try { if (h.length == 6) set(Color((0xFF000000L or h.toLong(16)).toULong()))
-            else if (h.length == 8) set(Color(h.toLong(16).toULong())); saveTheme(context) } catch (_: Exception) {}
+    
+   fun apply(raw: String, set: (Color) -> Unit) {
+   
+fun apply(raw: String, set: (Color) -> Unit) {
+    val h = raw.trim().removePrefix("#")
+
+    try {
+        if ((h.length != 6 && h.length != 8) ||
+            !h.all { it in "0123456789abcdefABCDEF" }) {
+            throw IllegalArgumentException("Format warna tidak valid")
+        }
+
+        val hex = if (h.length == 6) "#FF$h" else "#$h"
+        val argb = android.graphics.Color.parseColor(hex)
+
+        set(Color(argb))
+        saveTheme(context)
+
+    } catch (_: Exception) {
+        android.widget.Toast.makeText(
+            context,
+            "Kode warna tidak valid. Gunakan #RRGGBB",
+            android.widget.Toast.LENGTH_SHORT
+        ).show()
     }
+}
+
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Text("Pengaturan Tema", fontSize = 20.sp, fontWeight = FontWeight.Bold)
         Text("Tema tersimpan otomatis.", color = Muted)
