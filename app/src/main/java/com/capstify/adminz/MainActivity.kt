@@ -1,13 +1,12 @@
-
 package com.capstify.adminz
 
 import android.os.Bundle
 import android.content.Context
-import android.graphics.BitmapFactory
 import android.net.Uri
+import android.graphics.BitmapFactory
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -17,8 +16,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -32,8 +29,9 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.Dispatchers
@@ -49,1553 +47,470 @@ private var Panel2 by mutableStateOf(Color(0xFF232936))
 private var Accent by mutableStateOf(Color(0xFF9BCB45))
 private var Muted by mutableStateOf(Color(0xFFAAA8B6))
 private var Danger by mutableStateOf(Color(0xFFFF7777))
-private var Info by mutableStateOf(Color(0xFF83B9FF))
 private var TextColor by mutableStateOf(Color.White)
 private var SelectedFont by mutableStateOf("Default")
 private var BackgroundImage by mutableStateOf("")
 
-private val pages = listOf(
-    "Dashboard",
-    "Produk & Kode",
-    "Atur Stok",
-    "Pesanan",
-    "Tempat Sampah",
-    "Rekap Penjualan",
-    "Backup Data",
-    "Pengaturan Tema"
-)
+private val pages = listOf("Dashboard", "Produk & Kode", "Atur Stok", "Pesanan",
+    "Tempat Sampah", "Rekap Penjualan", "Backup Data", "Pengaturan Tema")
 
-private fun saveTheme(context: Context) {
-    val pref = context.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE)
-    pref.edit()
-        .putLong("bg", Bg.value.toLong())
-        .putLong("panel", Panel.value.toLong())
-        .putLong("panel2", Panel2.value.toLong())
-        .putLong("accent", Accent.value.toLong())
-        .putLong("muted", Muted.value.toLong())
-        .putLong("text", TextColor.value.toLong())
-        .putString("font", SelectedFont)
-        .putString("background_image", BackgroundImage)
-        .apply()
+private fun saveTheme(c: Context) {
+    c.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE).edit()
+        .putLong("bg", Bg.value.toLong()).putLong("panel", Panel.value.toLong())
+        .putLong("panel2", Panel2.value.toLong()).putLong("accent", Accent.value.toLong())
+        .putLong("muted", Muted.value.toLong()).putLong("text", TextColor.value.toLong())
+        .putString("font", SelectedFont).putString("background_image", BackgroundImage).apply()
 }
-
-private fun loadTheme(context: Context) {
-    val pref = context.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE)
-
-    fun color(key: String, default: Color): Color {
-        val value = pref.getLong(key, default.value.toLong())
-        return Color(value.toULong())
-    }
-
-    Bg = color("bg", Color(0xFF101218))
-    Panel = color("panel", Color(0xFF1B1F29))
-    Panel2 = color("panel2", Color(0xFF232936))
-    Accent = color("accent", Color(0xFF9BCB45))
-    Muted = color("muted", Color(0xFFAAA8B6))
-    TextColor = color("text", Color.White)
-    SelectedFont = pref.getString("font", "Default") ?: "Default"
-    BackgroundImage = pref.getString("background_image", "") ?: ""
+private fun loadTheme(c: Context) {
+    val p = c.getSharedPreferences("capstify_theme", Context.MODE_PRIVATE)
+    fun color(k: String, d: Color) = Color(p.getLong(k, d.value.toLong()).toULong())
+    Bg = color("bg", Color(0xFF101218)); Panel = color("panel", Color(0xFF1B1F29))
+    Panel2 = color("panel2", Color(0xFF232936)); Accent = color("accent", Color(0xFF9BCB45))
+    Muted = color("muted", Color(0xFFAAA8B6)); TextColor = color("text", Color.White)
+    SelectedFont = p.getString("font", "Default") ?: "Default"
+    BackgroundImage = p.getString("background_image", "") ?: ""
 }
-
-private fun resetTheme(context: Context) {
-    Bg = Color(0xFF101218)
-    Panel = Color(0xFF1B1F29)
-    Panel2 = Color(0xFF232936)
-    Accent = Color(0xFF9BCB45)
-    Muted = Color(0xFFAAA8B6)
-    TextColor = Color.White
-    SelectedFont = "Default"
-    BackgroundImage = ""
-    saveTheme(context)
+private fun resetTheme(c: Context) {
+    Bg = Color(0xFF101218); Panel = Color(0xFF1B1F29); Panel2 = Color(0xFF232936)
+    Accent = Color(0xFF9BCB45); Muted = Color(0xFFAAA8B6); TextColor = Color.White
+    SelectedFont = "Default"; BackgroundImage = ""; saveTheme(c)
 }
-
-private fun selectedFontFamily(): FontFamily {
-    return when (SelectedFont) {
-        "Sans Serif" -> FontFamily.SansSerif
-        "Serif" -> FontFamily.Serif
-        "Monospace" -> FontFamily.Monospace
-        "Cursive" -> FontFamily.Cursive
-        else -> FontFamily.Default
-    }
+private fun fontFamily() = when (SelectedFont) {
+    "Sans Serif" -> FontFamily.SansSerif
+    "Serif" -> FontFamily.Serif
+    "Monospace" -> FontFamily.Monospace
+    "Cursive" -> FontFamily.Cursive
+    else -> FontFamily.Default
 }
-
-data class Product(
-    val id: Int,
-    val sku: String,
-    val name: String,
-    val variant: String,
-    val price: Double,
-    val stock: Int
-)
-
-data class OrderRow(
-    val id: Int,
-    val number: String,
-    val platform: String,
-    val total: Double,
-    val payment: String,
-    val status: String,
-    val tracking: String,
-    val count: Int,
-    val created: String
-)
+private fun money(n: Double) = String.format(Locale("id", "ID"), "%,.0f", n)
+private fun JSONObject.array(k: String) = optJSONArray(k) ?: JSONArray()
+private fun JSONArray.rows() = (0 until length()).mapNotNull { optJSONObject(it) }
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         loadTheme(this)
-
         val api = CapstifyApi(this)
-
         setContent {
-            MaterialTheme(
-                colorScheme = darkColorScheme(
-                    background = Bg,
-                    surface = Panel,
-                    primary = Accent,
-                    onPrimary = Color.White,
-                    onBackground = TextColor,
-                    onSurface = TextColor,
-                    secondary = Muted,
-                    onSecondary = TextColor,
-                    error = Danger,
-                    onError = Color.White,
-                    surfaceVariant = Panel2,
-                    onSurfaceVariant = TextColor
-                ),
-                typography = Typography(
-                    defaultFontFamily = selectedFontFamily()
-                )
-            ) {
-                CapstifyApp(api)
+            MaterialTheme(colorScheme = darkColorScheme(
+                background = Bg, surface = Panel, primary = Accent, onPrimary = Color.Black,
+                onBackground = TextColor, onSurface = TextColor, secondary = Muted,
+                onSecondary = TextColor, error = Danger, onError = Color.Black,
+                surfaceVariant = Panel2, onSurfaceVariant = TextColor
+            ), typography = Typography(defaultFontFamily = fontFamily())) {
+                App(api)
             }
         }
     }
 }
 
 @Composable
-private fun CapstifyApp(api: CapstifyApi) {
-    val scope = rememberCoroutineScope()
+private fun App(api: CapstifyApi) {
     var loggedIn by remember { mutableStateOf(false) }
+    var user by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var userName by remember { mutableStateOf("") }
+    var page by remember { mutableStateOf("Dashboard") }
     var busy by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf("") }
-    var page by remember { mutableStateOf("Dashboard") }
     var stats by remember { mutableStateOf(JSONObject()) }
+    val scope = rememberCoroutineScope()
 
-    fun runApi(block: suspend () -> Unit) {
+    fun loadDashboard() {
         scope.launch {
             busy = true
-            message = ""
-            try {
-                block()
-            } catch (e: Exception) {
-                message = e.message ?: "Terjadi kesalahan."
-            }
+            try { stats = withContext(Dispatchers.IO) { api.get("/api/dashboard") }.optJSONObject("stats") ?: JSONObject() }
+            catch (e: Exception) { message = e.message ?: "Gagal memuat dashboard" }
             busy = false
         }
     }
-
-    fun loadDashboard() = runApi {
-        val data = withContext(Dispatchers.IO) {
-            api.get("/api/dashboard")
-        }
-        stats = data.optJSONObject("stats") ?: JSONObject()
-    }
-
-    fun go(target: String) {
-        page = target
-        message = ""
-        if (target == "Dashboard") loadDashboard()
-    }
-
-    BackHandler(loggedIn && page != "Dashboard") {
-        go("Dashboard")
-    }
-
+    BackHandler(loggedIn && page != "Dashboard") { page = "Dashboard" }
     LaunchedEffect(Unit) {
         try {
-            val me = withContext(Dispatchers.IO) {
-                api.get("/api/me")
-            }
-            userName = me.optJSONObject("user")?.optString("name").orEmpty()
+            val me = withContext(Dispatchers.IO) { api.get("/api/me") }
+            user = me.optJSONObject("user")?.optString("name").orEmpty()
             loggedIn = true
-
-            val d = withContext(Dispatchers.IO) {
-                api.get("/api/dashboard")
-            }
-            stats = d.optJSONObject("stats") ?: JSONObject()
-        } catch (_: Exception) {
-            loggedIn = false
-        }
+            loadDashboard()
+        } catch (_: Exception) { loggedIn = false }
     }
 
-    if (!loggedIn) {
-        LoginScreen(
-            username = username,
-            onUsername = { username = it },
-            password = password,
-            onPassword = { password = it },
-            busy = busy,
-            message = message,
-            onLogin = {
-                runApi {
-                    val result = withContext(Dispatchers.IO) {
-                        api.post(
-                            "/api/login",
-                            JSONObject()
-                                .put("username", username)
-                                .put("password", password)
-                        )
-                    }
-                    userName = result.optJSONObject("user")?.optString("name").orEmpty()
-                    password = ""
-                    loggedIn = true
-
-                    val d = withContext(Dispatchers.IO) {
-                        api.get("/api/dashboard")
-                    }
-                    stats = d.optJSONObject("stats") ?: JSONObject()
-                }
-            }
-        )
-    } else {
-        Box(
-            Modifier
-                .fillMaxSize()
-                .background(Bg)
-        ) {
-            ThemeBackground()
-
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-            ) {
-                var menu by remember { mutableStateOf(false) }
-
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(Panel)
-                        .padding(horizontal = 16.dp, vertical = 12.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(
-                            page,
-                            fontSize = 21.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            "Capstify-Admin Z · $userName",
-                            color = Muted,
-                            fontSize = 11.sp
-                        )
-                    }
-
-                    Box {
-                        IconButton(onClick = { menu = true }) {
-                            Icon(Icons.Default.Menu, "Menu")
-                        }
-
-                        DropdownMenu(
-                            expanded = menu,
-                            onDismissRequest = { menu = false }
-                        ) {
-                            pages.forEach { p ->
-                                DropdownMenuItem(
-                                    text = { Text(p) },
-                                    onClick = {
-                                        menu = false
-                                        go(p)
-                                    }
-                                )
-                            }
-
-                            HorizontalDivider()
-
-                            DropdownMenuItem(
-                                text = { Text("Keluar") },
-                                leadingIcon = {
-                                    Icon(Icons.Default.Logout, null)
-                                },
-                                onClick = {
-                                    menu = false
-                                    runApi {
-                                        try {
-                                            withContext(Dispatchers.IO) {
-                                                api.post("/api/logout")
-                                            }
-                                        } catch (_: Exception) {
-                                        }
-
-                                        api.clearSession()
-                                        loggedIn = false
-                                        page = "Dashboard"
-                                    }
-                                }
-                            )
-                        }
-                    }
-                }
-
-                when (page) {
-                    "Dashboard" -> DashboardScreen(
-                        stats, busy, message,
-                        { loadDashboard() },
-                        { go(it) }
-                    )
-                    "Produk & Kode" -> ProductScreen(api)
-                    "Atur Stok" -> StockScreen(api)
-                    "Pesanan" -> OrdersScreen(api, false)
-                    "Tempat Sampah" -> OrdersScreen(api, true)
-                    "Rekap Penjualan" -> ReportsScreen(api)
-                    "Backup Data" -> BackupScreen(api)
-                    "Pengaturan Tema" -> ThemeSettingsScreen()
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun LoginScreen(
-    username: String,
-    onUsername: (String) -> Unit,
-    password: String,
-    onPassword: (String) -> Unit,
-    busy: Boolean,
-    message: String,
-    onLogin: () -> Unit
-) {
-    Box(
-        Modifier
-            .fillMaxSize()
-            .background(Bg)
-    ) {
+    Box(Modifier.fillMaxSize().background(Bg)) {
         ThemeBackground()
-
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(24.dp),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Text(
-                "C",
-                color = Accent,
-                fontSize = 48.sp,
-                fontWeight = FontWeight.Black
-            )
-            Text(
-                "Capstify-Admin Z",
-                fontSize = 27.sp,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                "Sales Management System · Private Workspace",
-                color = Muted,
-                fontSize = 12.sp
-            )
-
-            Spacer(Modifier.height(28.dp))
-
-            OutlinedTextField(
-                value = username,
-                onValueChange = onUsername,
-                label = { Text("Username") },
-                singleLine = true,
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            Spacer(Modifier.height(10.dp))
-
-            OutlinedTextField(
-                value = password,
-                onValueChange = onPassword,
-                label = { Text("Password") },
-                singleLine = true,
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Password
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
-
-            if (message.isNotBlank()) {
-                Spacer(Modifier.height(10.dp))
-                Text(message, color = Danger, fontSize = 13.sp)
-            }
-
-            Spacer(Modifier.height(18.dp))
-
-            Button(
-                onClick = onLogin,
-                enabled = !busy &&
-                    username.isNotBlank() &&
-                    password.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(50.dp)
-            ) {
-                if (busy) {
-                    CircularProgressIndicator(
-                        Modifier.size(19.dp),
-                        strokeWidth = 2.dp
-                    )
-                } else {
-                    Text(
-                        "Masuk ke Dashboard",
-                        fontWeight = FontWeight.Bold
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun DashboardScreen(
-    stats: JSONObject,
-    busy: Boolean,
-    message: String,
-    onRefresh: () -> Unit,
-    onOpen: (String) -> Unit
-) {
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                "Ringkasan aktivitas operasional",
-                color = Muted,
-                modifier = Modifier.weight(1f)
-            )
-            IconButton(onClick = onRefresh) {
-                Icon(Icons.Default.Refresh, "Muat ulang")
-            }
-        }
-
-        val cards = listOf(
-            Triple("Pesanan Hari Ini", stats.optString("ordersToday", "—"), "Pesanan"),
-            Triple("Total Produk", stats.optString("totalProducts", "—"), "Produk & Kode"),
-            Triple("Total Stok", stats.optString("totalStock", "—"), "Atur Stok"),
-            Triple("Pesanan Diproses", stats.optString("pendingShipments", "—"), "Pesanan")
-        )
-
-        cards.chunked(2).forEach { pair ->
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                pair.forEach { (label, value, target) ->
-                    Card(
-                        Modifier
-                            .weight(1f)
-                            .padding(vertical = 5.dp)
-                            .clickable { onOpen(target) },
-                        colors = CardDefaults.cardColors(containerColor = Panel),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
-                        Column(Modifier.padding(15.dp)) {
-                            Text(label, color = Muted, fontSize = 12.sp)
-                            Spacer(Modifier.height(8.dp))
-                            Text(value, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-                            Text("Lihat detail →", color = Accent, fontSize = 11.sp)
-                        }
+        if (!loggedIn) {
+            Column(Modifier.fillMaxSize().padding(24.dp), verticalArrangement = Arrangement.Center) {
+                Text("Capstify-Admin Z", fontSize = 28.sp, fontWeight = FontWeight.Bold, color = Accent)
+                Text("Sales Management System", color = Muted)
+                Spacer(Modifier.height(24.dp))
+                OutlinedTextField(username, { username = it }, label = { Text("Username") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(password, { password = it }, label = { Text("Password") }, visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth(), singleLine = true)
+                if (message.isNotBlank()) Text(message, color = Danger)
+                Button(onClick = {
+                    scope.launch {
+                        busy = true; message = ""
+                        try {
+                            val r = withContext(Dispatchers.IO) { api.post("/api/login", JSONObject().put("username", username).put("password", password)) }
+                            user = r.optJSONObject("user")?.optString("name").orEmpty()
+                            loggedIn = true; password = ""; page = "Dashboard"; loadDashboard()
+                        } catch (e: Exception) { message = e.message ?: "Login gagal" }
+                        busy = false
                     }
+                }, enabled = !busy && username.isNotBlank() && password.isNotBlank(), modifier = Modifier.fillMaxWidth()) {
+                    Text(if (busy) "Memproses..." else "Masuk")
                 }
             }
-        }
-
-        Card(
-            Modifier
-                .fillMaxWidth()
-                .padding(top = 10.dp),
-            colors = CardDefaults.cardColors(containerColor = Color(0xFF202A1A))
-        ) {
-            Column(Modifier.padding(17.dp)) {
-                Text("Omzet Hari Ini", color = Muted, fontSize = 12.sp)
-                Text(
-                    "Rp${money(stats.optDouble("revenueToday", 0.0))}",
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold
-                )
-            }
-        }
-
-        if (busy) {
-            LinearProgressIndicator(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(top = 12.dp)
-            )
-        }
-
-        if (message.isNotBlank()) {
-            Text(message, color = Danger, modifier = Modifier.padding(top = 10.dp))
-        }
-
-        Spacer(Modifier.height(18.dp))
-        Text("Database terhubung", color = Accent, fontWeight = FontWeight.SemiBold)
-        Text(
-            "Data aplikasi menggunakan database Capstify yang sama dengan website.",
-            color = Muted,
-            fontSize = 12.sp
-        )
-        Spacer(Modifier.height(12.dp))
-
-        pages.drop(1).forEach { p ->
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp)
-                    .clickable { onOpen(p) },
-                colors = CardDefaults.cardColors(containerColor = Panel)
-            ) {
-                Row(
-                    Modifier.padding(15.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(p, Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
-                    Icon(Icons.Default.ChevronRight, null, tint = Accent)
-                }
-            }
-        }
-    }
-}
-
-private fun money(value: Double) =
-    String.format(Locale("id", "ID"), "%,.0f", value)
-
-private fun JSONObject.arr(key: String) =
-    optJSONArray(key) ?: JSONArray()
-
-private fun JSONArray.objects(): List<JSONObject> =
-    (0 until length()).mapNotNull { optJSONObject(it) }
-
-@Composable
-private fun ProductScreen(api: CapstifyApi) {
-    val scope = rememberCoroutineScope()
-    var products by remember { mutableStateOf(listOf<Product>()) }
-    var search by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
-    var showForm by remember { mutableStateOf(false) }
-    var editing by remember { mutableStateOf<Product?>(null) }
-    var deleting by remember { mutableStateOf<Product?>(null) }
-    var sku by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
-    var variant by remember { mutableStateOf("") }
-    var price by remember { mutableStateOf("") }
-    var stock by remember { mutableStateOf("") }
-
-    fun load() {
-        scope.launch {
-            loading = true
-            try {
-                val data = withContext(Dispatchers.IO) {
-                    api.get("/api/products")
-                }
-                products = data.arr("products").objects().map {
-                    Product(
-                        it.optInt("id"),
-                        it.optString("sku"),
-                        it.optString("name"),
-                        it.optString("variant"),
-                        it.optDouble("price"),
-                        it.optInt("stock")
-                    )
-                }
-                message = ""
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memuat produk"
-            }
-            loading = false
-        }
-    }
-
-    fun form(p: Product? = null) {
-        editing = p
-        sku = p?.sku.orEmpty()
-        name = p?.name.orEmpty()
-        variant = p?.variant.orEmpty()
-        price = p?.price?.toLong()?.toString().orEmpty()
-        stock = p?.stock?.toString().orEmpty()
-        message = ""
-        showForm = true
-    }
-
-    fun save() {
-        val pr = price.toDoubleOrNull()
-        val st = stock.toIntOrNull()
-
-        if (sku.isBlank() || name.isBlank()) {
-            message = "Kode dan nama produk wajib diisi."
-            return
-        }
-        if (pr == null || pr < 0) {
-            message = "Harga tidak valid."
-            return
-        }
-        if (st == null || st < 0) {
-            message = "Stok tidak valid."
-            return
-        }
-
-        scope.launch {
-            loading = true
-            try {
-                val body = JSONObject()
-                    .put("sku", sku.trim())
-                    .put("name", name.trim())
-                    .put("variant", variant.trim())
-                    .put("price", pr)
-                    .put("stock", st)
-
-                withContext(Dispatchers.IO) {
-                    if (editing == null) {
-                        api.post("/api/products", body)
-                    } else {
-                        api.put("/api/products/${editing!!.id}", body)
-                    }
-                }
-                showForm = false
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal menyimpan"
-            }
-            loading = false
-        }
-    }
-
-    fun remove(p: Product) {
-        scope.launch {
-            loading = true
-            try {
-                withContext(Dispatchers.IO) {
-                    api.delete("/api/products/${p.id}")
-                }
-                deleting = null
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal menghapus"
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        load()
-    }
-
-    val filtered = products.filter {
-        it.sku.contains(search, true) ||
-            it.name.contains(search, true) ||
-            it.variant.contains(search, true)
-    }
-
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Kelola Produk", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text("${products.size} produk terdaftar", color = Muted, fontSize = 12.sp)
-            }
-            IconButton(onClick = { load() }) {
-                Icon(Icons.Default.Refresh, "Refresh")
-            }
-        }
-
-        Button(
-            onClick = { form() },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-        ) {
-            Icon(Icons.Default.Add, null)
-            Spacer(Modifier.width(6.dp))
-            Text("Tambah Produk")
-        }
-
-        OutlinedTextField(
-            value = search,
-            onValueChange = { search = it },
-            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            singleLine = true,
-            label = { Text("Cari kode atau nama produk") },
-            leadingIcon = { Icon(Icons.Default.Search, null) }
-        )
-
-        if (loading) {
-            LinearProgressIndicator(
-                Modifier.fillMaxWidth().padding(top = 8.dp)
-            )
-        }
-
-        if (message.isNotBlank() && !showForm) {
-            Text(message, color = Danger, modifier = Modifier.padding(top = 8.dp))
-        }
-
-        LazyColumn(Modifier.weight(1f).padding(top = 8.dp)) {
-            items(filtered, key = { it.id }) { p ->
-                Card(
-                    Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                    colors = CardDefaults.cardColors(containerColor = Panel)
-                ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Column(Modifier.weight(1f)) {
-                                Text(p.sku, color = Accent, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                                Text(p.name, fontWeight = FontWeight.Bold)
-                                Text(
-                                    p.variant.ifBlank { "Tanpa varian" },
-                                    color = Muted,
-                                    fontSize = 12.sp
-                                )
-                            }
-                            Text("Stok ${p.stock}", color = Accent, fontWeight = FontWeight.Bold)
-                        }
-
-                        Text("Rp${money(p.price)}", modifier = Modifier.padding(top = 7.dp))
-
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            OutlinedButton(
-                                onClick = { form(p) },
-                                modifier = Modifier.weight(1f)
-                            ) {
-                                Icon(Icons.Default.Edit, null)
-                                Text("Edit")
-                            }
-                            OutlinedButton(
-                                onClick = { deleting = p },
-                                modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.outlinedButtonColors(contentColor = Danger)
-                            ) {
-                                Icon(Icons.Default.Delete, null)
-                                Text("Hapus")
-                            }
-                        }
-                    }
-                }
-            }
-
-            if (!loading && filtered.isEmpty()) {
-                item {
-                    Text(
-                        "Produk tidak ditemukan.",
-                        color = Muted,
-                        modifier = Modifier.padding(18.dp)
-                    )
-                }
-            }
-        }
-    }
-
-    if (showForm) {
-        AlertDialog(
-            onDismissRequest = { showForm = false },
-            title = { Text(if (editing == null) "Tambah Produk" else "Edit Produk") },
-            text = {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Field("Kode Produk", sku, { sku = it.uppercase() })
-                    Field("Nama Produk", name, { name = it })
-                    Field("Varian", variant, { variant = it })
-                    Field("Harga", price, { price = it }, true)
-                    Field("Stok", stock, { stock = it }, true)
-                    if (message.isNotBlank()) {
-                        Text(message, color = Danger, fontSize = 12.sp)
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { save() }, enabled = !loading) {
-                    Text("Simpan")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showForm = false }) {
-                    Text("Batal")
-                }
-            },
-            containerColor = Panel
-        )
-    }
-
-    deleting?.let { p ->
-        AlertDialog(
-            onDismissRequest = { deleting = null },
-            title = { Text("Hapus produk?") },
-            text = { Text("Hapus ${p.sku} — ${p.name}?") },
-            confirmButton = {
-                TextButton(onClick = { remove(p) }, enabled = !loading) {
-                    Text("Hapus", color = Danger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { deleting = null }) {
-                    Text("Batal")
-                }
-            },
-            containerColor = Panel
-        )
-    }
-}
-
-@Composable
-private fun StockScreen(api: CapstifyApi) {
-    val scope = rememberCoroutineScope()
-    var products by remember { mutableStateOf(listOf<Product>()) }
-    var movements by remember { mutableStateOf(listOf<JSONObject>()) }
-    var selected by remember { mutableStateOf<Product?>(null) }
-    var targetStock by remember { mutableStateOf("") }
-    var quantity by remember { mutableStateOf("") }
-    var type by remember { mutableStateOf("in") }
-    var reference by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
-    var mode by remember { mutableStateOf("set") }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
-
-    fun load() {
-        scope.launch {
-            loading = true
-            try {
-                val p = withContext(Dispatchers.IO) {
-                    api.get("/api/products")
-                }
-                products = p.arr("products").objects().map {
-                    Product(
-                        it.optInt("id"),
-                        it.optString("sku"),
-                        it.optString("name"),
-                        it.optString("variant"),
-                        it.optDouble("price"),
-                        it.optInt("stock")
-                    )
-                }
-
-                val m = withContext(Dispatchers.IO) {
-                    api.get("/api/stock-movements")
-                }
-                movements = m.arr("movements").objects()
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memuat stok"
-            }
-            loading = false
-        }
-    }
-
-    fun submit() {
-        val p = selected ?: run {
-            message = "Pilih produk terlebih dahulu."
-            return
-        }
-
-        val body = JSONObject()
-            .put("productId", p.id)
-            .put("notes", notes)
-
-        if (mode == "set") {
-            val n = targetStock.toIntOrNull()
-            if (n == null || n < 0) {
-                message = "Masukkan jumlah stok akhir yang valid."
-                return
-            }
-            body.put("stock", n)
         } else {
-            val n = quantity.toIntOrNull()
-            if (n == null || n <= 0) {
-                message = "Jumlah perubahan harus lebih dari 0."
-                return
-            }
-            body.put("quantity", n)
-                .put("type", type)
-                .put("reference", reference)
-        }
-
-        scope.launch {
-            loading = true
-            try {
-                withContext(Dispatchers.IO) {
-                    if (mode == "set") {
-                        api.post("/api/stock-set", body)
-                    } else {
-                        api.post("/api/stock-adjustments", body)
-                    }
-                }
-                message = "Stok berhasil diperbarui."
-                targetStock = ""
-                quantity = ""
-                notes = ""
-                reference = ""
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memperbarui stok"
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        load()
-    }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Text("Manajemen Stok", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-        Text(
-            "Atur stok akhir atau catat stok masuk dan keluar.",
-            color = Muted,
-            fontSize = 12.sp
-        )
-        Spacer(Modifier.height(12.dp))
-
-        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
-            Column(Modifier.padding(14.dp)) {
-                Text("Pilih Produk", fontWeight = FontWeight.Bold)
-                var expanded by remember { mutableStateOf(false) }
-
-                Box {
-                    OutlinedButton(
-                        onClick = { expanded = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            selected?.let { "${it.sku} · ${it.name}" } ?: "Pilih produk",
-                            modifier = Modifier.weight(1f)
-                        )
-                        Icon(Icons.Default.ArrowDropDown, null)
-                    }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        products.forEach { p ->
-                            DropdownMenuItem(
-                                text = { Text("${p.sku} · ${p.name} (stok ${p.stock})") },
-                                onClick = {
-                                    selected = p
-                                    expanded = false
-                                }
-                            )
-                        }
-                    }
-                }
-
-                selected?.let {
-                    Text(
-                        "Stok saat ini: ${it.stock}",
-                        color = Accent,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(top = 6.dp)
-                    )
-                }
-
-                Spacer(Modifier.height(12.dp))
-
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    FilterChip(
-                        selected = mode == "set",
-                        onClick = { mode = "set" },
-                        label = { Text("Atur Stok Akhir") }
-                    )
-                    FilterChip(
-                        selected = mode == "adjust",
-                        onClick = { mode = "adjust" },
-                        label = { Text("Stok Masuk/Keluar") }
-                    )
-                }
-
-private fun OrdersScreen(api: CapstifyApi, trash: Boolean) {
-    val scope = rememberCoroutineScope()
-    var orders by remember { mutableStateOf(listOf<OrderRow>()) }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
-    var search by remember { mutableStateOf("") }
-    var detail by remember { mutableStateOf<OrderRow?>(null) }
-
-    fun load() {
-        scope.launch {
-            loading = true
-            try {
-                val endpoint = if (trash) "/api/orders/trash" else "/api/orders"
-                val data = withContext(Dispatchers.IO) {
-                    api.get(endpoint)
-                }
-                orders = data.arr("orders").objects().map {
-                    OrderRow(
-                        it.optInt("id"),
-                        it.optString("order_number"),
-                        it.optString("platform"),
-                        it.optDouble("total_amount"),
-                        it.optString("payment_status"),
-                        it.optString("order_status"),
-                        it.optString("tracking_number"),
-                        it.optInt("item_count"),
-                        it.optString("created_at")
-                    )
-                }
-                message = ""
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memuat pesanan"
-            }
-            loading = false
-        }
-    }
-
-    fun action(order: OrderRow, action: String, status: String? = null) {
-        scope.launch {
-            loading = true
-            try {
-                withContext(Dispatchers.IO) {
-                    when (action) {
-                        "status" -> api.post(
-                            "/api/orders/${order.id}/status",
-                            JSONObject().put("status", status)
-                        )
-                        "trash" -> api.post("/api/orders/${order.id}/trash")
-                        "restore" -> api.post("/api/orders/${order.id}/restore")
-                        "permanent" -> api.post("/api/orders/${order.id}/permanent")
-                    }
-                }
-                detail = null
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Aksi gagal"
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(trash) {
-        load()
-    }
-
-    val filtered = orders.filter {
-        it.number.contains(search, true) ||
-            it.platform.contains(search, true) ||
-            it.tracking.contains(search, true)
-    }
-
-    Column(Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text(
-                    if (trash) "Tempat Sampah Pesanan" else "Kelola Pesanan",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold
-                )
-                Text("${orders.size} pesanan", color = Muted, fontSize = 12.sp)
-            }
-            IconButton(onClick = { load() }) {
-                Icon(Icons.Default.Refresh, "Refresh")
-            }
-        }
-
-        OutlinedTextField(
-            value = search,
-            onValueChange = { search = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            label = { Text("Cari nomor pesanan, platform, resi") },
-            leadingIcon = { Icon(Icons.Default.Search, null) }
-        )
-
-        if (loading) {
-            LinearProgressIndicator(
-                Modifier.fillMaxWidth().padding(top = 6.dp)
-            )
-        }
-
-        if (message.isNotBlank()) {
-            Text(message, color = Danger, modifier = Modifier.padding(vertical = 6.dp))
-        }
-
-        LazyColumn(Modifier.weight(1f).padding(top = 6.dp)) {
-            items(filtered, key = { it.id }) { o ->
-                Card(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 4.dp)
-                        .clickable { detail = o },
-                    colors = CardDefaults.cardColors(containerColor = Panel)
-                ) {
-                    Column(Modifier.padding(14.dp)) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(
-                                o.number.ifBlank { "Pesanan #${o.id}" },
-                                Modifier.weight(1f),
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(o.status, color = Accent, fontSize = 11.sp)
-                        }
-                        Text(
-                            "${o.platform} · ${o.count} item · ${o.payment}",
-                            color = Muted,
-                            fontSize = 12.sp
-                        )
-                        Text(
-                            "Rp${money(o.total)}",
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(top = 5.dp)
-                        )
-                        if (o.tracking.isNotBlank()) {
-                            Text("Resi: ${o.tracking}", color = Muted, fontSize = 11.sp)
-                        }
-                        Text(o.created, color = Muted, fontSize = 10.sp)
-                    }
-                }
-            }
-
-            if (!loading && filtered.isEmpty()) {
-                item {
-                    Text(
-                        "Belum ada pesanan.",
-                        color = Muted,
-                        modifier = Modifier.padding(16.dp)
-                    )
-                }
-            }
-        }
-    }
-
-    detail?.let { o ->
-        AlertDialog(
-            onDismissRequest = { detail = null },
-            title = {
-                Text(o.number.ifBlank { "Pesanan #${o.id}" })
-            },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Text("Platform: ${o.platform}")
-                    Text("Pembayaran: ${o.payment}")
-                    Text("Status: ${o.status}")
-                    Text("Total: Rp${money(o.total)}")
-                    Text("Nomor resi: ${o.tracking.ifBlank { "—" }}")
-
-                    Spacer(Modifier.height(10.dp))
-
-                    if (trash) {
-                        Button(
-                            onClick = { action(o, "restore") },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("Pulihkan Pesanan")
-                        }
-
-                        OutlinedButton(
-                            onClick = { action(o, "permanent") },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.outlinedButtonColors(
-                                contentColor = Danger
-                            )
-                        ) {
-                            Text("Hapus Permanen")
-                        }
-                    } else {
-                        Text("Ubah Status", fontWeight = FontWeight.Bold)
-
-                        listOf(
-                            "processing" to "Diproses",
-                            "shipped" to "Dikirim",
-                            "delivered" to "Selesai",
-                            "cancelled" to "Dibatalkan"
-                        ).forEach { (s, label) ->
-                            OutlinedButton(
-                                onClick = { action(o, "status", s) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                            ) {
-                                Text(label)
-                            }
-                        }
-
-                        TextButton(onClick = { action(o, "trash") }) {
-                            Text("Pindahkan ke Tempat Sampah", color = Danger)
-                        }
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { detail = null }) {
-                    Text("Tutup")
-                }
-            },
-            containerColor = Panel
-        )
-    }
-}
-
-@Composable
-private fun ReportsScreen(api: CapstifyApi) {
-    val scope = rememberCoroutineScope()
-    var orders by remember { mutableStateOf(listOf<OrderRow>()) }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
-
-    fun load() {
-        scope.launch {
-            loading = true
-            try {
-                val d = withContext(Dispatchers.IO) {
-                    api.get("/api/orders")
-                }
-                orders = d.arr("orders").objects().map {
-                    OrderRow(
-                        it.optInt("id"),
-                        it.optString("order_number"),
-                        it.optString("platform"),
-                        it.optDouble("total_amount"),
-                        it.optString("payment_status"),
-                        it.optString("order_status"),
-                        it.optString("tracking_number"),
-                        it.optInt("item_count"),
-                        it.optString("created_at")
-                    )
-                }
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memuat rekap"
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        load()
-    }
-
-    val completed = orders.filter {
-        it.status.equals("delivered", true) ||
-            it.status.equals("completed", true)
-    }
-    val paid = orders.filter { it.payment.equals("paid", true) }
-    val revenue = paid.sumOf { it.total }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Rekap Penjualan", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    "Ringkasan berdasarkan data pesanan",
-                    color = Muted,
-                    fontSize = 12.sp
-                )
-            }
-            IconButton(onClick = { load() }) {
-                Icon(Icons.Default.Refresh, "Refresh")
-            }
-        }
-
-        if (loading) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
-        }
-        if (message.isNotBlank()) {
-            Text(message, color = Danger)
-        }
-
-        ReportCard("Total Pesanan", orders.size.toString())
-        ReportCard("Pesanan Selesai", completed.size.toString())
-        ReportCard("Pesanan Dibayar", paid.size.toString())
-        ReportCard("Total Nilai Pesanan Dibayar", "Rp${money(revenue)}")
-
-        Text(
-            "Ringkasan per Platform",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 14.dp, bottom = 6.dp)
-        )
-
-        (
-            orders.map { it.platform }
-                .filter { it.isNotBlank() }
-                .distinct()
-                .ifEmpty { listOf("Website", "TikTok Shop", "Shopee") }
-        ).forEach { platform ->
-            val list = orders.filter { it.platform.equals(platform, true) }
-
-            Card(
-                Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                colors = CardDefaults.cardColors(containerColor = Panel)
-            ) {
-                Row(
-                    Modifier.padding(14.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
+            Column(Modifier.fillMaxSize().statusBarsPadding()) {
+                Row(Modifier.fillMaxWidth().background(Panel).padding(14.dp), verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
-                        Text(platform, fontWeight = FontWeight.SemiBold)
-                        Text("${list.size} pesanan", color = Muted, fontSize = 12.sp)
+                        Text(page, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        Text("Capstify-Admin Z · $user", color = Muted, fontSize = 11.sp)
                     }
-                    Text(
-                        "Rp${money(list.filter { it.payment == "paid" }.sumOf { it.total })}",
-                        color = Accent,
-                        fontWeight = FontWeight.Bold
-                    )
+                    var menu by remember { mutableStateOf(false) }
+                    Box {
+                        IconButton(onClick = { menu = true }) { Icon(Icons.Default.Menu, "Menu") }
+                        DropdownMenu(menu, { menu = false }) {
+                            pages.forEach { p -> DropdownMenuItem(text = { Text(p) }, onClick = { page = p; menu = false; message = "" }) }
+                            HorizontalDivider()
+                            DropdownMenuItem(text = { Text("Keluar") }, onClick = {
+                                menu = false
+                                scope.launch {
+                                    try { withContext(Dispatchers.IO) { api.post("/api/logout") } } catch (_: Exception) {}
+                                    api.clearSession(); loggedIn = false; page = "Dashboard"
+                                }
+                            })
+                        }
+                    }
+                }
+                when (page) {
+                    "Dashboard" -> Dashboard(stats, busy, message, { loadDashboard() }, { page = it })
+                    "Produk & Kode" -> Products(api)
+                    "Atur Stok" -> Stock(api)
+                    "Pesanan" -> Orders(api, false)
+                    "Tempat Sampah" -> Orders(api, true)
+                    "Rekap Penjualan" -> Reports(api)
+                    "Backup Data" -> Backup(api)
+                    "Pengaturan Tema" -> ThemeSettings()
                 }
             }
         }
-
-        Text(
-            "Catatan: rekap dihitung dari data pesanan yang dikembalikan server; total pendapatan memakai pesanan berstatus pembayaran paid.",
-            color = Muted,
-            fontSize = 11.sp,
-            modifier = Modifier.padding(top = 12.dp)
-        )
     }
 }
 
 @Composable
-private fun BackupScreen(api: CapstifyApi) {
-    val scope = rememberCoroutineScope()
-    var jobs by remember { mutableStateOf(listOf<JSONObject>()) }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
-    var showRestore by remember { mutableStateOf(false) }
-    var fileId by remember { mutableStateOf("") }
-    var restorePassword by remember { mutableStateOf("") }
-    var confirmation by remember { mutableStateOf("") }
-
-    fun load() {
-        scope.launch {
-            loading = true
-            try {
-                val d = withContext(Dispatchers.IO) {
-                    api.get("/api/backups")
-                }
-                jobs = d.arr("jobs").objects()
-                message = ""
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal memuat backup"
-            }
-            loading = false
-        }
-    }
-
-    fun request() {
-        scope.launch {
-            loading = true
-            try {
-                val d = withContext(Dispatchers.IO) {
-                    api.post("/api/backups/request")
-                }
-                message = d.optString("message")
-                    .ifBlank { "Permintaan backup berhasil dibuat." }
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Gagal meminta backup"
-            }
-            loading = false
-        }
-    }
-
-    fun restore() {
-        if (
-            fileId.isBlank() ||
-            restorePassword.isBlank() ||
-            confirmation != "PULIHKAN DATA"
-        ) {
-            message = "Isi File ID, password, dan konfirmasi persis PULIHKAN DATA."
-            return
-        }
-
-        scope.launch {
-            loading = true
-            try {
-                val body = JSONObject()
-                    .put("fileId", fileId.trim())
-                    .put("password", restorePassword)
-                    .put("confirmation", confirmation)
-
-                val d = withContext(Dispatchers.IO) {
-                    api.post("/api/backups/restore", body)
-                }
-                message = d.optString("message")
-                    .ifBlank { "Permintaan pemulihan dikirim." }
-                showRestore = false
-                load()
-            } catch (e: Exception) {
-                message = e.message ?: "Pemulihan gagal"
-            }
-            loading = false
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        load()
-    }
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState())
-            .padding(16.dp)
-    ) {
+private fun Dashboard(s: JSONObject, busy: Boolean, msg: String, refresh: () -> Unit, open: (String) -> Unit) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Column(Modifier.weight(1f)) {
-                Text("Backup Data", fontSize = 20.sp, fontWeight = FontWeight.Bold)
-                Text(
-                    "Cadangkan dan pulihkan database",
-                    color = Muted,
-                    fontSize = 12.sp
-                )
-            }
-            IconButton(onClick = { load() }) {
-                Icon(Icons.Default.Refresh, "Refresh")
-            }
+            Text("Ringkasan aktivitas operasional", Modifier.weight(1f), color = Muted)
+            IconButton(onClick = refresh) { Icon(Icons.Default.Refresh, "Refresh") }
         }
-
-        Card(colors = CardDefaults.cardColors(containerColor = Panel)) {
-            Column(Modifier.padding(15.dp)) {
-                Text("Buat Backup", fontWeight = FontWeight.Bold)
-                Text(
-                    "Minta server membuat salinan database terbaru.",
-                    color = Muted,
-                    fontSize = 12.sp
-                )
-                Button(
-                    onClick = { request() },
-                    enabled = !loading,
-                    modifier = Modifier.fillMaxWidth().padding(top = 10.dp)
-                ) {
-                    Icon(Icons.Default.CloudUpload, null)
-                    Text("Buat Backup Sekarang")
-                }
-            }
-        }
-
-        Card(
-            Modifier.padding(top = 10.dp),
-            colors = CardDefaults.cardColors(containerColor = Panel)
-        ) {
-            Column(Modifier.padding(15.dp)) {
-                Text("Pulihkan Data", fontWeight = FontWeight.Bold)
-                Text(
-                    "Pemulihan akan mengganti data database. Pastikan file dan password benar.",
-                    color = Danger,
-                    fontSize = 12.sp
-                )
-                OutlinedButton(
-                    onClick = { showRestore = true },
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
-                ) {
-                    Icon(Icons.Default.Restore, null)
-                    Text("Buka Pemulihan")
-                }
-            }
-        }
-
-        if (message.isNotBlank()) {
-            Text(
-                message,
-                color = if (message.contains("berhasil", true)) Accent else Danger,
-                modifier = Modifier.padding(vertical = 10.dp)
-            )
-        }
-
-        Text(
-            "Riwayat Backup",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 14.dp, bottom = 6.dp)
+        val cards = listOf(
+            Triple("Pesanan Hari Ini", s.optString("ordersToday", "—"), "Pesanan"),
+            Triple("Total Produk", s.optString("totalProducts", "—"), "Produk & Kode"),
+            Triple("Total Stok", s.optString("totalStock", "—"), "Atur Stok"),
+            Triple("Pesanan Diproses", s.optString("pendingShipments", "—"), "Pesanan")
         )
-
-        if (loading) {
-            LinearProgressIndicator(Modifier.fillMaxWidth())
-        }
-
-        jobs.forEach { j ->
-            Card(
-                Modifier.fillMaxWidth().padding(vertical = 3.dp),
-                colors = CardDefaults.cardColors(containerColor = Panel)
-            ) {
-                Column(Modifier.padding(13.dp)) {
-                    Text(
-                        j.optString("file_name").ifBlank {
-                            j.optString("filename").ifBlank {
-                                "Backup ${j.optString("id")}"
-                            }
-                        },
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        "Status: ${j.optString("status", "—")}",
-                        color = Accent,
-                        fontSize = 12.sp
-                    )
-                    Text(j.optString("created_at"), color = Muted, fontSize = 11.sp)
-                    if (j.optString("id").isNotBlank()) {
-                        Text(
-                            "File ID: ${j.optString("id")}",
-                            color = Muted,
-                            fontSize = 10.sp
-                        )
+        cards.chunked(2).forEach { group ->
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                group.forEach { (label, value, target) ->
+                    Card(Modifier.weight(1f).padding(vertical = 4.dp).clickable { open(target) },
+                        colors = CardDefaults.cardColors(containerColor = Panel)) {
+                        Column(Modifier.padding(14.dp)) {
+                            Text(label, color = Muted, fontSize = 12.sp)
+                            Text(value, fontSize = 23.sp, fontWeight = FontWeight.Bold)
+                        }
                     }
                 }
             }
         }
-
-        if (!loading && jobs.isEmpty()) {
-            Text("Belum ada riwayat backup yang tersedia.", color = Muted)
+        Card(Modifier.fillMaxWidth().padding(top = 8.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Omzet Hari Ini", color = Muted)
+                Text("Rp${money(s.optDouble("revenueToday"))}", fontSize = 24.sp, color = Accent, fontWeight = FontWeight.Bold)
+            }
+        }
+        if (busy) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 8.dp))
+        if (msg.isNotBlank()) Text(msg, color = Danger)
+        Spacer(Modifier.height(14.dp))
+        pages.drop(1).forEach { p ->
+            Card(Modifier.fillMaxWidth().padding(vertical = 3.dp).clickable { open(p) },
+                colors = CardDefaults.cardColors(containerColor = Panel)) {
+                Row(Modifier.padding(15.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(p, Modifier.weight(1f)); Icon(Icons.Default.ChevronRight, null, tint = Accent)
+                }
+            }
         }
     }
+}
 
-    if (showRestore) {
-        AlertDialog(
-            onDismissRequest = { showRestore = false },
-            title = { Text("Pulihkan Database") },
-            text = {
-                Column(Modifier.verticalScroll(rememberScrollState())) {
-                    Field("File ID", fileId, { fileId = it })
-                    OutlinedTextField(
-                        value = restorePassword,
-                        onValueChange = { restorePassword = it },
-                        label = { Text("Password Admin") },
-                        visualTransformation = PasswordVisualTransformation(),
-                        singleLine = true,
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    Field(
-                        "Ketik PULIHKAN DATA",
-                        confirmation,
-                        { confirmation = it }
-                    )
-                                        Text(
-                        "Tindakan ini berisiko mengganti data yang sedang tersimpan.",
-                        color = Danger,
-                        fontSize = 11.sp
-                    )
+@Composable
+private fun Products(api: CapstifyApi) {
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf(listOf<JSONObject>()) }
+    var loading by remember { mutableStateOf(false) }
+    var msg by remember { mutableStateOf("") }
+    var search by remember { mutableStateOf("") }
+    var sku by remember { mutableStateOf("") }; var name by remember { mutableStateOf("") }
+    var variant by remember { mutableStateOf("") }; var price by remember { mutableStateOf("") }
+    var stock by remember { mutableStateOf("") }
+    fun load() { scope.launch { loading = true; try {
+        list = withContext(Dispatchers.IO) { api.get("/api/products") }.array("products").rows()
+        msg = ""
+    } catch (e: Exception) { msg = e.message ?: "Gagal memuat produk" }; loading = false } }
+    LaunchedEffect(Unit) { load() }
+    Column(Modifier.fillMaxSize().padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text("Produk & Kode", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { load() }) { Icon(Icons.Default.Refresh, "Muat ulang") }
+        }
+        OutlinedTextField(search, { search = it }, label = { Text("Cari SKU / nama") }, modifier = Modifier.fillMaxWidth(), singleLine = true)
+        Card(Modifier.fillMaxWidth().padding(vertical = 8.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp)) {
+                Text("Tambah Produk", fontWeight = FontWeight.Bold)
+                Field("SKU / Kode", sku, { sku = it })
+                Field("Nama Produk", name, { name = it })
+                Field("Varian", variant, { variant = it })
+                Field("Harga", price, { price = it }, true)
+                Field("Stok Awal", stock, { stock = it }, true)
+                Button(onClick = { scope.launch {
+                    try {
+                        withContext(Dispatchers.IO) { api.post("/api/products", JSONObject().put("sku", sku).put("name", name).put("variant", variant).put("price", price.toDoubleOrNull() ?: 0).put("stock", stock.toIntOrNull() ?: 0)) }
+                        sku = ""; name = ""; variant = ""; price = ""; stock = ""; msg = "Produk berhasil ditambahkan"; load()
+                    } catch (e: Exception) { msg = e.message ?: "Gagal menyimpan" }
+                } }, enabled = sku.isNotBlank() && name.isNotBlank(), modifier = Modifier.fillMaxWidth()) { Text("Simpan Produk") }
+            }
+        }
+        if (msg.isNotBlank()) Text(msg, color = if (msg.contains("berhasil", true)) Accent else Danger)
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        LazyColumn {
+            items(list.filter { it.optString("name").contains(search, true) || it.optString("sku").contains(search, true) }) { p ->
+                Card(Modifier.fillMaxWidth().padding(vertical = 3.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+                    Row(Modifier.padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(p.optString("name"), fontWeight = FontWeight.Bold)
+                            Text("${p.optString("sku")} · ${p.optString("variant")}", color = Muted, fontSize = 12.sp)
+                            Text("Rp${money(p.optDouble("price"))} · Stok ${p.optInt("stock")}", color = Accent)
+                        }
+                        IconButton(onClick = { scope.launch { try {
+                            withContext(Dispatchers.IO) { api.delete("/api/products/${p.optInt("id")}") }; load()
+                        } catch (e: Exception) { msg = e.message ?: "Gagal menghapus" } } }) { Icon(Icons.Default.Delete, "Hapus", tint = Danger) }
+                    }
                 }
-            },
-            confirmButton = {
-                TextButton(onClick = { restore() }, enabled = !loading) {
-                    Text("Pulihkan", color = Danger)
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showRestore = false }) {
-                    Text("Batal")
-                }
-            },
-            containerColor = Panel
-        )
+            }
+        }
     }
+}
+
+@Composable
+private fun Stock(api: CapstifyApi) {
+    val scope = rememberCoroutineScope()
+    var products by remember { mutableStateOf(listOf<JSONObject>()) }
+    var selected by remember { mutableStateOf<JSONObject?>(null) }
+    var mode by remember { mutableStateOf("set") }; var type by remember { mutableStateOf("in") }
+    var amount by remember { mutableStateOf("") }; var notes by remember { mutableStateOf("") }
+    var msg by remember { mutableStateOf("") }; var loading by remember { mutableStateOf(false) }
+    fun load() { scope.launch { try { products = withContext(Dispatchers.IO) { api.get("/api/products") }.array("products").rows() }
+        catch (e: Exception) { msg = e.message ?: "Gagal memuat stok" } } }
+    LaunchedEffect(Unit) { load() }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Text("Manajemen Stok", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        var expanded by remember { mutableStateOf(false) }
+        Box {
+            OutlinedButton(onClick = { expanded = true }, modifier = Modifier.fillMaxWidth()) {
+                Text(selected?.optString("name") ?: "Pilih Produk", Modifier.weight(1f))
+                Icon(Icons.Default.ArrowDropDown, null)
+            }
+            DropdownMenu(expanded, { expanded = false }) {
+                products.forEach { p -> DropdownMenuItem(text = { Text("${p.optString("sku")} · ${p.optString("name")} (stok ${p.optInt("stock")})") },
+                    onClick = { selected = p; expanded = false }) }
+            }
+        }
+        selected?.let { Text("Stok saat ini: ${it.optInt("stock")}", color = Accent, modifier = Modifier.padding(8.dp)) }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(mode == "set", { mode = "set" }, label = { Text("Atur Stok Akhir") })
+            FilterChip(mode == "adjust", { mode = "adjust" }, label = { Text("Masuk / Keluar") })
+        }
+        if (mode == "adjust") Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(type == "in", { type = "in" }, label = { Text("Masuk") })
+            FilterChip(type == "out", { type = "out" }, label = { Text("Keluar") })
+        }
+        Field(if (mode == "set") "Jumlah stok akhir" else "Jumlah perubahan", amount, { amount = it }, true)
+        Field("Catatan", notes, { notes = it })
+        Button(enabled = !loading && selected != null && amount.isNotBlank(), onClick = {
+            val p = selected ?: return@Button
+            val n = amount.toIntOrNull()
+            if (n == null || n < 0 || (mode == "adjust" && n == 0)) { msg = "Jumlah tidak valid"; return@Button }
+            scope.launch { loading = true; try {
+                val body = JSONObject().put("productId", p.optInt("id")).put("notes", notes)
+                val endpoint = if (mode == "set") { body.put("stock", n); "/api/stock-set" }
+                    else { body.put("quantity", n).put("type", type); "/api/stock-adjustments" }
+                withContext(Dispatchers.IO) { api.post(endpoint, body) }
+                msg = "Stok berhasil diperbarui"; amount = ""; notes = ""; load()
+            } catch (e: Exception) { msg = e.message ?: "Gagal memperbarui stok" }; loading = false }
+        }, modifier = Modifier.fillMaxWidth()) { Text("Simpan Perubahan") }
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (msg.isNotBlank()) Text(msg, color = if (msg.contains("berhasil", true)) Accent else Danger)
+    }
+}
+
+@Composable
+private fun Orders(api: CapstifyApi, trash: Boolean) {
+    val scope = rememberCoroutineScope()
+    var list by remember { mutableStateOf(listOf<JSONObject>()) }; var msg by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }; var search by remember { mutableStateOf("") }
+    fun load() { scope.launch { loading = true; try {
+        val endpoint = if (trash) "/api/orders/trash" else "/api/orders"
+        list = withContext(Dispatchers.IO) { api.get(endpoint) }.array("orders").rows(); msg = ""
+    } catch (e: Exception) { msg = e.message ?: "Gagal memuat pesanan" }; loading = false } }
+    LaunchedEffect(Unit) { load() }
+    Column(Modifier.fillMaxSize().padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(if (trash) "Tempat Sampah" else "Pesanan", Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            IconButton(onClick = { load() }) { Icon(Icons.Default.Refresh, "Refresh") }
+        }
+        OutlinedTextField(search, { search = it }, label = { Text("Cari nomor pesanan") }, modifier = Modifier.fillMaxWidth())
+        if (loading) LinearProgressIndicator(Modifier.fillMaxWidth())
+        if (msg.isNotBlank()) Text(msg, color = Danger)
+        LazyColumn {
+            items(list.filter { it.optString("order_number").contains(search, true) }) { o ->
+                Card(Modifier.fillMaxWidth().padding(vertical = 4.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+                    Column(Modifier.padding(12.dp)) {
+                        Text(o.optString("order_number"), fontWeight = FontWeight.Bold)
+                        Text("${o.optString("platform")} · ${o.optString("payment_status")}", color = Muted)
+                        Text("Rp${money(o.optDouble("total_amount"))} · ${o.optString("order_status")}", color = Accent)
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            if (trash) {
+                                TextButton(onClick = { scope.launch { try {
+                                    withContext(Dispatchers.IO) { api.post("/api/orders/${o.optInt("id")}/restore") }; load()
+                                } catch (e: Exception) { msg = e.message ?: "Gagal memulihkan" } } }) { Text("Pulihkan") }
+                                TextButton(onClick = { scope.launch { try {
+                                    withContext(Dispatchers.IO) { api.delete("/api/orders/${o.optInt("id")}/permanent") }; load()
+                                } catch (e: Exception) { msg = e.message ?: "Gagal menghapus" } } }) { Text("Hapus Permanen", color = Danger) }
+                            } else {
+                                TextButton(onClick = { scope.launch { try {
+                                    withContext(Dispatchers.IO) { api.post("/api/orders/${o.optInt("id")}/trash") }; load()
+                                } catch (e: Exception) { msg = e.message ?: "Gagal memindahkan" } } }) { Text("Ke Sampah", color = Danger) }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun Reports(api: CapstifyApi) {
+    var list by remember { mutableStateOf(listOf<JSONObject>()) }; var msg by remember { mutableStateOf("") }
+    LaunchedEffect(Unit) { try { list = withContext(Dispatchers.IO) { api.get("/api/orders") }.array("orders").rows() }
+        catch (e: Exception) { msg = e.message ?: "Gagal memuat laporan" } }
+    val paid = list.filter { it.optString("payment_status") == "paid" }
+    Column(Modifier.fillMaxSize().padding(16.dp)) {
+        Text("Rekap Penjualan", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("Jumlah pesanan: ${list.size}", color = Muted)
+        Text("Pesanan dibayar: ${paid.size}", color = Muted)
+        Text("Total pendapatan: Rp${money(paid.sumOf { it.optDouble("total_amount") })}", color = Accent, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        if (msg.isNotBlank()) Text(msg, color = Danger)
+    }
+}
+
+@Composable
+private fun Backup(api: CapstifyApi) {
+    val scope = rememberCoroutineScope()
+    var msg by remember { mutableStateOf("") }; var fileId by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }; var confirmation by remember { mutableStateOf("") }
+    var show by remember { mutableStateOf(false) }; var loading by remember { mutableStateOf(false) }
+    var jobs by remember { mutableStateOf(listOf<JSONObject>()) }
+    fun load() { scope.launch { try { jobs = withContext(Dispatchers.IO) { api.get("/api/backups") }.array("jobs").rows() }
+        catch (e: Exception) { msg = e.message ?: "Gagal memuat backup" } } }
+    LaunchedEffect(Unit) { load() }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Text("Backup Data", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Button(enabled = !loading, onClick = { scope.launch { loading = true; try {
+            val r = withContext(Dispatchers.IO) { api.post("/api/backups/request") }
+            msg = r.optString("message").ifBlank { "Permintaan backup berhasil dibuat" }; load()
+        } catch (e: Exception) { msg = e.message ?: "Gagal membuat backup" }; loading = false } }, modifier = Modifier.fillMaxWidth()) { Text("Buat Backup Sekarang") }
+        OutlinedButton(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) { Text("Pulihkan Database") }
+        if (msg.isNotBlank()) Text(msg, color = Accent)
+        Text("Riwayat Backup", fontWeight = FontWeight.Bold)
+        jobs.forEach { j -> Card(Modifier.fillMaxWidth().padding(vertical = 3.dp), colors = CardDefaults.cardColors(containerColor = Panel)) {
+            Column(Modifier.padding(12.dp)) {
+                Text(j.optString("file_name").ifBlank { "Backup ${j.optString("id")}" })
+                Text("Status: ${j.optString("status")}", color = Muted)
+                Text("ID: ${j.optString("id")}", color = Muted, fontSize = 11.sp)
+            }
+        } }
+    }
+    if (show) AlertDialog(onDismissRequest = { show = false }, title = { Text("Pulihkan Database") },
+        text = { Column {
+            Field("File ID", fileId, { fileId = it })
+            OutlinedTextField(password, { password = it }, label = { Text("Password Admin") },
+                visualTransformation = PasswordVisualTransformation(), modifier = Modifier.fillMaxWidth())
+            Field("Ketik PULIHKAN DATA", confirmation, { confirmation = it })
+            Text("Pemulihan akan mengganti data tersimpan.", color = Danger, fontSize = 11.sp)
+        } },
+        confirmButton = { TextButton(enabled = !loading, onClick = { scope.launch { loading = true; try {
+            withContext(Dispatchers.IO) { api.post("/api/backups/restore", JSONObject().put("fileId", fileId).put("password", password).put("confirmation", confirmation)) }
+            msg = "Permintaan pemulihan berhasil dikirim"; show = false
+        } catch (e: Exception) { msg = e.message ?: "Gagal memulihkan" }; loading = false } }) { Text("Pulihkan") } },
+        dismissButton = { TextButton(onClick = { show = false }) { Text("Batal") } },
+        containerColor = Panel)
+}
+
+@Composable
+private fun ThemeSettings() {
+    val context = LocalContext.current
+    var bg by remember { mutableStateOf("#101218") }; var panel by remember { mutableStateOf("#1B1F29") }
+    var text by remember { mutableStateOf("#FFFFFF") }; var accent by remember { mutableStateOf("#9BCB45") }
+    var fontMenu by remember { mutableStateOf(false) }
+    fun apply(raw: String, set: (Color) -> Unit) {
+        val h = raw.removePrefix("#")
+        try { if (h.length == 6) set(Color((0xFF000000L or h.toLong(16)).toULong()))
+            else if (h.length == 8) set(Color(h.toLong(16).toULong())); saveTheme(context) } catch (_: Exception) {}
+    }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
+        Text("Pengaturan Tema", fontSize = 20.sp, fontWeight = FontWeight.Bold)
+        Text("Tema tersimpan otomatis.", color = Muted)
+        Field("Background (#RRGGBB)", bg, { bg = it })
+        Button(onClick = { apply(bg) { Bg = it } }, modifier = Modifier.fillMaxWidth()) { Text("Terapkan Background") }
+        Field("Panel (#RRGGBB)", panel, { panel = it })
+        Button(onClick = { apply(panel) { Panel = it } }, modifier = Modifier.fillMaxWidth()) { Text("Terapkan Panel") }
+        Field("Warna Teks (#RRGGBB)", text, { text = it })
+        Button(onClick = { apply(text) { TextColor = it } }, modifier = Modifier.fillMaxWidth()) { Text("Terapkan Teks") }
+        Field("Warna Aksen (#RRGGBB)", accent, { accent = it })
+        Button(onClick = { apply(accent) { Accent = it } }, modifier = Modifier.fillMaxWidth()) { Text("Terapkan Aksen") }
+        OutlinedButton(onClick = { fontMenu = true }) { Text("Font: $SelectedFont") }
+        DropdownMenu(fontMenu, { fontMenu = false }) {
+            listOf("Default", "Sans Serif", "Serif", "Monospace", "Cursive").forEach { f ->
+                DropdownMenuItem(text = { Text(f) }, onClick = { SelectedFont = f; fontMenu = false; saveTheme(context) })
+            }
+        }
+        val picker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri: Uri? ->
+            if (uri != null) { try { context.contentResolver.takePersistableUriPermission(uri, android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION) } catch (_: Exception) {}; BackgroundImage = uri.toString(); saveTheme(context) }
+        }
+        Button(onClick = { picker.launch(arrayOf("image/*")) }, modifier = Modifier.fillMaxWidth()) { Text("Pilih Gambar Background") }
+        if (BackgroundImage.isNotBlank()) TextButton(onClick = { BackgroundImage = ""; saveTheme(context) }) { Text("Hapus Gambar") }
+        OutlinedButton(onClick = { resetTheme(context); bg = "#101218"; panel = "#1B1F29"; text = "#FFFFFF"; accent = "#9BCB45" },
+            modifier = Modifier.fillMaxWidth()) { Text("Reset Tema Default") }
+    }
+}
+
+@Composable
+private fun Field(label: String, value: String, onValue: (String) -> Unit, numeric: Boolean = false) {
+    OutlinedTextField(value, onValue, label = { Text(label) }, singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = if (numeric) KeyboardType.Number else KeyboardType.Text),
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp))
+}
+
+@Composable
+private fun ThemeBackground() {
+    val context = LocalContext.current
+    val bitmap by produceState<android.graphics.Bitmap?>(null, BackgroundImage) {
+        value = if (BackgroundImage.isBlank()) null else withContext(Dispatchers.IO) {
+            try { context.contentResolver.openInputStream(Uri.parse(BackgroundImage))?.use { BitmapFactory.decodeStream(it) } }
+            catch (_: Exception) { null }
+        }
+    }
+    if (bitmap != null) Image(bitmap!!.asImageBitmap(), null, Modifier.fillMaxSize(),
+        contentScale = ContentScale.Crop, alpha = 0.22f)
 }
