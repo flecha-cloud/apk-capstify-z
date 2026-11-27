@@ -222,7 +222,7 @@ private fun CapstifyApp(api: CapstifyApi) {
         }
     }
 }
-
+}
 @Composable
 private fun LoginScreen(username:String,onUsername:(String)->Unit,password:String,onPassword:(String)->Unit,busy:Boolean,message:String,onLogin:()->Unit) {
     Box(
@@ -252,7 +252,7 @@ private fun LoginScreen(username:String,onUsername:(String)->Unit,password:Strin
         }
     }
 }
-
+}
 @Composable
 private fun DashboardScreen(stats:JSONObject,busy:Boolean,message:String,onRefresh:()->Unit,onOpen:(String)->Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
