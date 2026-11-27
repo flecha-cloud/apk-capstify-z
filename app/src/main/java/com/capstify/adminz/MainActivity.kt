@@ -214,45 +214,285 @@ private fun CapstifyApp(api: CapstifyApi) {
     "Produk & Kode" -> ProductScreen(api)
     "Atur Stok" -> StockScreen(api)
     "Pesanan" -> OrdersScreen(api, false)
-    "Tempat Sampah" -> OrdersScreen(api, true)
-    "Rekap Penjualan" -> ReportsScreen(api)
-    "Backup Data" -> BackupScreen(api)
-    "Pengaturan Tema" -> ThemeSettingsScreen()
+
+class MainActivity : ComponentActivity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        loadTheme(this)
+
+        val api = CapstifyApi(this)
+
+        setContent {
+            MaterialTheme(
+                colorScheme = darkColorScheme(
+                    background = Bg,
+                    surface = Panel,
+                    primary = Accent,
+                    onPrimary = Color.White,
+                    onBackground = TextColor,
+                    onSurface = TextColor,
+                    secondary = Muted,
+                    onSecondary = TextColor,
+                    error = Danger,
+                    onError = Color.White,
+                    surfaceVariant = Panel2,
+                    onSurfaceVariant = TextColor
+                ),
+                typography = Typography(
+                    defaultFontFamily = selectedFontFamily()
+                )
+            ) {
+                CapstifyApp(api)
             }
         }
     }
 }
-}
-@Composable
-private fun LoginScreen(username:String,onUsername:(String)->Unit,password:String,onPassword:(String)->Unit,busy:Boolean,message:String,onLogin:()->Unit) {
-    Box(
-    Modifier
-        .fillMaxSize()
-        .background(Bg)
-) {
-    ThemeBackground()
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("C", color=Accent, fontSize=48.sp, fontWeight=FontWeight.Black)
-        Text("Capstify-Admin Z", fontSize=27.sp, fontWeight=FontWeight.Bold)
-        Text("Sales Management System · Private Workspace", color=Muted, fontSize=12.sp)
-        Spacer(Modifier.height(28.dp))
-        OutlinedTextField(username,onUsername,label={Text("Username")},singleLine=true,modifier=Modifier.fillMaxWidth())
-        Spacer(Modifier.height(10.dp))
-        OutlinedTextField(password,onPassword,label={Text("Password")},singleLine=true,visualTransformation=PasswordVisualTransformation(),keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.Password),modifier=Modifier.fillMaxWidth())
-        if(message.isNotBlank()) { Spacer(Modifier.height(10.dp)); Text(message,color=Danger,fontSize=13.sp) }
-        Spacer(Modifier.height(18.dp))
-        Button(onClick=onLogin,enabled=!busy && username.isNotBlank() && password.isNotBlank(),modifier=Modifier.fillMaxWidth().height(50.dp)) {
-            if(busy) CircularProgressIndicator(Modifier.size(19.dp),strokeWidth=2.dp) else Text("Masuk ke Dashboard",fontWeight=FontWeight.Bold)
+@Composable
+private fun CapstifyApp(api: CapstifyApi) {
+    val scope = rememberCoroutineScope()
+    var loggedIn by remember { mutableStateOf(false) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
+    var busy by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
+    var page by remember { mutableStateOf("Dashboard") }
+    var stats by remember { mutableStateOf(JSONObject()) }
+
+    fun runApi(block: suspend () -> Unit) {
+        scope.launch {
+            busy = true
+            message = ""
+            try {
+                block()
+            } catch (e: Exception) {
+                message = e.message ?: "Terjadi kesalahan."
+            }
+            busy = false
+        }
+    }
+
+    fun loadDashboard() = runApi {
+        val data = withContext(Dispatchers.IO) {
+            api.get("/api/dashboard")
+        }
+        stats = data.optJSONObject("stats") ?: JSONObject()
+    }
+
+    fun go(target: String) {
+        page = target
+        message = ""
+        if (target == "Dashboard") loadDashboard()
+    }
+
+    BackHandler(loggedIn && page != "Dashboard") {
+        go("Dashboard")
+    }
+
+    LaunchedEffect(Unit) {
+        try {
+            val me = withContext(Dispatchers.IO) {
+                api.get("/api/me")
+            }
+            userName = me.optJSONObject("user")?.optString("name").orEmpty()
+            loggedIn = true
+            val d = withContext(Dispatchers.IO) {
+                api.get("/api/dashboard")
+            }
+            stats = d.optJSONObject("stats") ?: JSONObject()
+        } catch (_: Exception) {
+            loggedIn = false
+        }
+    }
+
+    if (!loggedIn) {
+        LoginScreen(
+            username,
+            { username = it },
+            password,
+            { password = it },
+            busy,
+            message
+        ) {
+            runApi {
+                val result = withContext(Dispatchers.IO) {
+                    api.post(
+                        "/api/login",
+                        JSONObject()
+                            .put("username", username)
+                            .put("password", password)
+                    )
+                }
+                userName = result.optJSONObject("user")?.optString("name").orEmpty()
+                password = ""
+                loggedIn = true
+                val d = withContext(Dispatchers.IO) {
+                    api.get("/api/dashboard")
+                }
+                stats = d.optJSONObject("stats") ?: JSONObject()
+            }
+        }
+    } else {
+        Box(
+            Modifier
+                .fillMaxSize()
+                .background(Bg)
+        ) {
+            ThemeBackground()
+
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .statusBarsPadding()
+            ) {
+                var menu by remember { mutableStateOf(false) }
+
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .background(Panel)
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(Modifier.weight(1f)) {
+                        Text(page, fontSize = 21.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            "Capstify-Admin Z · $userName",
+                            color = Muted,
+                            fontSize = 11.sp
+                        )
+                    }
+
+                    Box {
+                        IconButton(onClick = { menu = true }) {
+                            Icon(Icons.Default.Menu, "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = menu,
+                            onDismissRequest = { menu = false }
+                        ) {
+                            pages.forEach { p ->
+                                DropdownMenuItem(
+                                    text = { Text(p) },
+                                    onClick = {
+                                        menu = false
+                                        go(p)
+                                    }
+                                )
+                            }
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Keluar") },
+                                leadingIcon = { Icon(Icons.Default.Logout, null) },
+                                onClick = {
+                                    menu = false
+                                    runApi {
+                                        try {
+                                            withContext(Dispatchers.IO) {
+                                                api.post("/api/logout")
+                                            }
+                                        } catch (_: Exception) {}
+                                        api.clearSession()
+                                        loggedIn = false
+                                        page = "Dashboard"
+                                    }
+                                }
+                            )
+                        }
+                    }
+                }
+
+                when (page) {
+                    "Dashboard" -> DashboardScreen(
+                        stats, busy, message, { loadDashboard() }, { go(it) }
+                    )
+                    "Produk & Kode" -> ProductScreen(api)
+                    "Atur Stok" -> StockScreen(api)
+                    "Pesanan" -> OrdersScreen(api, false)
+                    "Tempat Sampah" -> OrdersScreen(api, true)
+                    "Rekap Penjualan" -> ReportsScreen(api)
+                    "Backup Data" -> BackupScreen(api)
+                    "Pengaturan Tema" -> ThemeSettingsScreen()
+                }
+            }
         }
     }
 }
+
+@Composable
+private fun LoginScreen(
+    username: String,
+    onUsername: (String) -> Unit,
+    password: String,
+    onPassword: (String) -> Unit,
+    busy: Boolean,
+    message: String,
+    onLogin: () -> Unit
+) {
+    Box(
+        Modifier
+            .fillMaxSize()
+            .background(Bg)
+    ) {
+        ThemeBackground()
+
+        Column(
+            Modifier
+                .fillMaxSize()
+                .padding(24.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text("C", color = Accent, fontSize = 48.sp, fontWeight = FontWeight.Black)
+            Text("Capstify-Admin Z", fontSize = 27.sp, fontWeight = FontWeight.Bold)
+            Text(
+                "Sales Management System · Private Workspace",
+                color = Muted,
+                fontSize = 12.sp
+            )
+            Spacer(Modifier.height(28.dp))
+            OutlinedTextField(
+                username,
+                onUsername,
+                label = { Text("Username") },
+                singleLine = true,
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(Modifier.height(10.dp))
+            OutlinedTextField(
+                password,
+                onPassword,
+                label = { Text("Password") },
+                singleLine = true,
+                visualTransformation = PasswordVisualTransformation(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                modifier = Modifier.fillMaxWidth()
+            )
+            if (message.isNotBlank()) {
+                Spacer(Modifier.height(10.dp))
+                Text(message, color = Danger, fontSize = 13.sp)
+            }
+            Spacer(Modifier.height(18.dp))
+            Button(
+                onClick = onLogin,
+                enabled = !busy && username.isNotBlank() && password.isNotBlank(),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+            ) {
+                if (busy) {
+                    CircularProgressIndicator(
+                        Modifier.size(19.dp),
+                        strokeWidth = 2.dp
+                    )
+                } else {
+                    Text("Masuk ke Dashboard", fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
 }
+
 @Composable
 private fun DashboardScreen(stats:JSONObject,busy:Boolean,message:String,onRefresh:()->Unit,onOpen:(String)->Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp)) {
