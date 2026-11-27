@@ -176,7 +176,18 @@ private fun CapstifyApp(api: CapstifyApi) {
             }
         }
     } else {
-        Column(Modifier.fillMaxSize().background(Bg).statusBarsPadding()) {
+        Box(
+    Modifier
+        .fillMaxSize()
+        .background(Bg)
+) {
+    ThemeBackground()
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .statusBarsPadding()
+    ) {
             var menu by remember { mutableStateOf(false) }
             Row(Modifier.fillMaxWidth().background(Panel).padding(horizontal=16.dp, vertical=12.dp), verticalAlignment=Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -214,7 +225,19 @@ private fun CapstifyApp(api: CapstifyApi) {
 
 @Composable
 private fun LoginScreen(username:String,onUsername:(String)->Unit,password:String,onPassword:(String)->Unit,busy:Boolean,message:String,onLogin:()->Unit) {
-    Column(Modifier.fillMaxSize().background(Bg).padding(24.dp), verticalArrangement=Arrangement.Center) {
+    Box(
+    Modifier
+        .fillMaxSize()
+        .background(Bg)
+) {
+    ThemeBackground()
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(24.dp),
+        verticalArrangement = Arrangement.Center
+    ) {
         Text("C", color=Accent, fontSize=48.sp, fontWeight=FontWeight.Black)
         Text("Capstify-Admin Z", fontSize=27.sp, fontWeight=FontWeight.Bold)
         Text("Sales Management System · Private Workspace", color=Muted, fontSize=12.sp)
@@ -889,3 +912,37 @@ private fun ThemeSettingsScreen() {
         Spacer(Modifier.height(20.dp))
     }
 }
+
+@Composable
+private fun ThemeBackground() {
+    val context = LocalContext.current
+
+    val bitmap by produceState<androidx.compose.ui.graphics.ImageBitmap?>(
+        initialValue = null,
+        key1 = BackgroundImage
+    ) {
+        value = if (BackgroundImage.isBlank()) {
+            null
+        } else {
+            withContext(Dispatchers.IO) {
+                try {
+                    context.contentResolver
+                        .openInputStream(Uri.parse(BackgroundImage))
+                        ?.use { BitmapFactory.decodeStream(it)?.asImageBitmap() }
+                } catch (_: Exception) {
+                    null
+                }
+            }
+        }
+    }
+
+    if (bitmap != null) {
+        Image(
+            bitmap = bitmap!!,
+            contentDescription = "Background aplikasi",
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop
+        )
+    }
+}
+
