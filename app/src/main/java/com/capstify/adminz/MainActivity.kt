@@ -487,8 +487,6 @@ private fun ThemeSettings() {
     var fontMenu by remember { mutableStateOf(false) }
     
    fun apply(raw: String, set: (Color) -> Unit) {
-   
-fun apply(raw: String, set: (Color) -> Unit) {
     val h = raw.trim().removePrefix("#")
 
     try {
