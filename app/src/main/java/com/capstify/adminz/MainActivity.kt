@@ -54,10 +54,23 @@ class MainActivity : ComponentActivity() {
         val api = CapstifyApi(this)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme(
-                background=Bg, surface=Panel, primary=Accent, onPrimary=Bg,
-                onBackground=Color.White, onSurface=Color.White, secondary=Muted,
-                error=Danger, surfaceVariant=Panel2, onSurfaceVariant=Color.White
-            )) { CapstifyApp(api) }
+    background = Bg,
+    surface = Panel,
+    primary = Accent,
+    onPrimary = Color.White,
+    onBackground = Color.White,
+    onSurface = Color.White,
+    secondary = Muted,
+    onSecondary = Color.White,
+    onTertiary = Color.White,
+    onPrimaryContainer = Color.White,
+    onSecondaryContainer = Color.White,
+    onTertiaryContainer = Color.White,
+    onError = Color.White,
+    error = Danger,
+    surfaceVariant = Panel2,
+    onSurfaceVariant = Color.White
+)) { CapstifyApp(api) }
         }
     }
 }
