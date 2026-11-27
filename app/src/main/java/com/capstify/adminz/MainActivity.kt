@@ -79,8 +79,9 @@ private fun fontFamily() = when (SelectedFont) {
     "Sans Serif" -> FontFamily.SansSerif
     "Serif" -> FontFamily.Serif
     "Monospace" -> FontFamily.Monospace
-    "Cursive" -> FontFamily.Cursive
+        "Cursive" -> FontFamily.Cursive
     else -> FontFamily.Default
+}
 private fun appTypography(): Typography {
     val base = Typography()
     val family = fontFamily()
@@ -101,8 +102,8 @@ private fun appTypography(): Typography {
         labelMedium = base.labelMedium.copy(fontFamily = family),
         labelSmall = base.labelSmall.copy(fontFamily = family)
     )
-    }
 }
+
 private fun money(n: Double) = String.format(Locale("id", "ID"), "%,.0f", n)
 private fun JSONObject.array(k: String) = optJSONArray(k) ?: JSONArray()
 private fun JSONArray.rows() = (0 until length()).mapNotNull { optJSONObject(it) }
