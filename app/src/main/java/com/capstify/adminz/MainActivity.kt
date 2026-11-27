@@ -350,7 +350,7 @@ private fun StockScreen(api:CapstifyApi) {
                     Field("Jumlah",quantity,{quantity=it},true);Field("Referensi",reference,{reference=it})
                 }
                 Field("Catatan",notes,{notes=it})
-                Button(onClick={submit},enabled=!loading,modifier=Modifier.fillMaxWidth()){Text("Simpan Perubahan Stok")}
+                Button(onClick={submit()},enabled=!loading,modifier=Modifier.fillMaxWidth()){Text("Simpan Perubahan Stok")}
             }
         }
         if(message.isNotBlank()) Text(message,color=if(message.contains("berhasil"))Accent else Danger,modifier=Modifier.padding(vertical=8.dp))
@@ -482,7 +482,7 @@ private fun BackupScreen(api:CapstifyApi) {
             Column(Modifier.padding(15.dp)){
                 Text("Buat Backup",fontWeight=FontWeight.Bold)
                 Text("Minta server membuat salinan database terbaru.",color=Muted,fontSize=12.sp)
-                Button(onClick={request},enabled=!loading,modifier=Modifier.fillMaxWidth().padding(top=10.dp)){Icon(Icons.Default.CloudUpload,null);Text("Buat Backup Sekarang")}
+                Button(onClick={request()},enabled=!loading,modifier=Modifier.fillMaxWidth().padding(top=10.dp)){Icon(Icons.Default.CloudUpload,null);Text("Buat Backup Sekarang")}
             }
         }
         Card(Modifier.padding(top=10.dp),colors=CardDefaults.cardColors(containerColor=Panel)){
@@ -514,7 +514,7 @@ private fun BackupScreen(api:CapstifyApi) {
             Field("Ketik PULIHKAN DATA",confirmation,{confirmation=it})
             Text("Tindakan ini berisiko mengganti data yang sedang tersimpan.",color=Danger,fontSize=11.sp)
         }
-    },confirmButton={TextButton(onClick={restore},enabled=!loading){Text("Pulihkan",color=Danger)}},dismissButton={TextButton(onClick={showRestore=false}){Text("Batal")}},containerColor=Panel)
+    },confirmButton={TextButton(onClick={restore()},enabled=!loading){Text("Pulihkan",color=Danger)}},dismissButton={TextButton(onClick={showRestore=false}){Text("Batal")}},containerColor=Panel)
 }
 
 @Composable
