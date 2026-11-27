@@ -457,6 +457,7 @@ private fun LoginScreen(
     }
 }
 
+@Composable
 private fun DashboardScreen(
     stats: JSONObject,
     busy: Boolean,
@@ -1577,13 +1578,24 @@ private fun BackupScreen(api: CapstifyApi) {
                         confirmation,
                         { confirmation = it }
                     )
-                    Text(
-                        "Tindakan ini berisiko meng
-                if (mode == "set") {
-                    Field("Jumlah stok akhir", targetStock, { targetStock = it }, true)
-                } else {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilterChip(
-                            selected = type == "in",
-
-                        
+                                        Text(
+                        "Tindakan ini berisiko mengganti data yang sedang tersimpan.",
+                        color = Danger,
+                        fontSize = 11.sp
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { restore() }, enabled = !loading) {
+                    Text("Pulihkan", color = Danger)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRestore = false }) {
+                    Text("Batal")
+                }
+            },
+            containerColor = Panel
+        )
+    }
+}
