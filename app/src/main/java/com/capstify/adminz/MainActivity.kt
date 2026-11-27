@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
@@ -22,6 +23,7 @@ private val AppGrey = Color(0xFFAAA3B5)
 private val AppCard = Color(0xFF17131F)
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -52,16 +54,37 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 private fun CapstifyApp(api: CapstifyApi) {
+
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var loggedIn by remember { mutableStateOf(false) }
-    var checkingSession by remember { mutableStateOf(true) }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var userName by remember { mutableStateOf("") }
-    var loading by remember { mutableStateOf(false) }
-    var message by remember { mutableStateOf("") }
+    var loggedIn by remember {
+        mutableStateOf(false)
+    }
+
+    var checkingSession by remember {
+        mutableStateOf(true)
+    }
+
+    var username by remember {
+        mutableStateOf("")
+    }
+
+    var password by remember {
+        mutableStateOf("")
+    }
+
+    var userName by remember {
+        mutableStateOf("")
+    }
+
+    var loading by remember {
+        mutableStateOf(false)
+    }
+
+    var message by remember {
+        mutableStateOf("")
+    }
 
     var orders by remember {
         mutableStateOf(OrderStorage.load(context))
@@ -79,9 +102,11 @@ private fun CapstifyApp(api: CapstifyApi) {
             }
 
             userName = result.optJSONObject("user")
-                ?.optString("name").orEmpty()
+                ?.optString("name")
+                .orEmpty()
 
             loggedIn = true
+
         } catch (_: Exception) {
             loggedIn = false
         }
@@ -94,10 +119,13 @@ private fun CapstifyApp(api: CapstifyApi) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(AppBlack),
-            contentAlignment = androidx.compose.ui.Alignment.Center
+            contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(color = AppPurple)
+            CircularProgressIndicator(
+                color = AppPurple
+            )
         }
+
         return
     }
 
@@ -107,8 +135,15 @@ private fun CapstifyApp(api: CapstifyApi) {
             password = password,
             loading = loading,
             message = message,
-            onUsernameChange = { username = it },
-            onPasswordChange = { password = it },
+
+            onUsernameChange = {
+                username = it
+            },
+
+            onPasswordChange = {
+                password = it
+            },
+
             onLogin = {
                 scope.launch {
                     loading = true
@@ -124,26 +159,35 @@ private fun CapstifyApp(api: CapstifyApi) {
                             )
                         }
 
-                        userName = result.optJSONObject("user")
-                            ?.optString("name").orEmpty()
+                        userName = result
+                            .optJSONObject("user")
+                            ?.optString("name")
+                            .orEmpty()
 
                         loggedIn = true
                         password = ""
+
                     } catch (e: Exception) {
-                        message = e.message ?: "Login gagal."
+                        message = e.message
+                            ?: "Login gagal."
                     }
 
                     loading = false
                 }
             }
         )
+
         return
     }
 
     OrderHomeScreen(
         userName = userName,
         orders = orders,
-        onOrdersChanged = { saveOrders(it) },
+
+        onOrdersChanged = { updated ->
+            saveOrders(updated)
+        },
+
         onLogout = {
             scope.launch {
                 try {
@@ -154,9 +198,11 @@ private fun CapstifyApp(api: CapstifyApi) {
                 }
 
                 api.clearSession()
+
                 loggedIn = false
                 username = ""
                 password = ""
+                userName = ""
             }
         }
     )
