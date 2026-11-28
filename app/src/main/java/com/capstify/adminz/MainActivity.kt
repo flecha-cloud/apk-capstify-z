@@ -206,6 +206,29 @@ private fun CapstifyApp(api: CapstifyApi) {
         onOrdersChanged = { updated ->
             saveOrders(updated)
         },
+        onCompleteOrder = { order ->
+    withContext(Dispatchers.IO) {
+        api.post(
+            "/api/apk/complete-order",
+            org.json.JSONObject()
+                .put("orderNumber", order.orderNumber)
+                .put("platform", order.platform)
+                .put("productId", order.productId)
+                .put("quantity", order.quantity.toInt())
+                .put("customerName", order.recipient)
+                .put("customerPhone", order.customerPhone)
+                .put(
+                    "address",
+                    "${order.address}, ${order.city}".trim(' ', ',')
+                )
+                .put("courier", order.courier)
+                .put("trackingNumber", order.tracking)
+                .put("paymentStatus", "unpaid")
+        )
+    }
+
+    loadProducts()
+},
         onLogout = {
             scope.launch {
                 try {
