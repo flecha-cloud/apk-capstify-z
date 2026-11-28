@@ -20,9 +20,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -135,6 +135,7 @@ fun OrderHomeScreen(
     loadingProducts: Boolean,
     onRefreshProducts: () -> Unit,
     onOrdersChanged: (List<OrderData>) -> Unit,
+    onCompleteOrder: suspend (OrderData) -> Unit,
     onLogout: () -> Unit
 ) {
     var search by remember { mutableStateOf("") }
@@ -142,6 +143,11 @@ fun OrderHomeScreen(
     var selected by remember { mutableStateOf<OrderData?>(null) }
     var showForm by remember { mutableStateOf(false) }
     var celebration by remember { mutableStateOf(false) }
+
+    val scope = rememberCoroutineScope()
+
+    var completing by remember { mutableStateOf(false) }
+    var completionError by remember { mutableStateOf("") }
 
     if (showForm) {
         OrderEditor(
@@ -163,28 +169,116 @@ fun OrderHomeScreen(
                 selected = null
             },
             onComplete = { order ->
-                val completed = order.copy(
-                    status = "Dah Kelar Bre"
-                )
+                if (!completing && !order.synced) {
+                    completing = true
+                    completionError = ""
 
-                val updated = if (selected == null) {
-                    orders + completed
-                } else {
-                    orders.map {
-                        if (it.id == completed.id) completed else it
+                    scope.launch {
+                        try {
+                            // Kirim pesanan ke website terlebih dahulu.
+                            onCompleteOrder(order)
+
+                            // Tandai selesai hanya setelah website berhasil.
+                            val completed = order.copy(
+                                status = "Dah Kelar Bre",
+                                synced = true
+                            )
+
+                            val updated = if (selected == null) {
+                                orders + completed
+                            } else {
+                                orders.map {
+                                    if (it.id == completed.id) {
+                                        completed
+                                    } else {
+                                        it
+                                    }
+                                }
+                            }
+
+                            onOrdersChanged(updated)
+
+                            showForm = false
+                            selected = null
+                            celebration = true
+
+                        } catch (e: Exception) {
+                            completionError = e.message
+                                ?: "Gagal mengirim pesanan ke website."
+                        } finally {
+                            completing = false
+                        }
                     }
                 }
-
-                onOrdersChanged(updated)
-                showForm = false
-                selected = null
-                celebration = true
             },
             onCancel = {
-                showForm = false
-                selected = null
+                if (!completing) {
+                    showForm = false
+                    selected = null
+                    completionError = ""
+                }
             }
         )
+
+        if (completing) {
+            AlertDialog(
+                onDismissRequest = {},
+                containerColor = DarkCard,
+                title = {
+                    Text(
+                        "Mengirim Pesanan",
+                        color = White
+                    )
+                },
+                text = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(22.dp),
+                            color = Purple,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            "Menghubungkan ke website...",
+                            color = Grey
+                        )
+                    }
+                },
+                confirmButton = {}
+            )
+        }
+
+        if (completionError.isNotBlank()) {
+            AlertDialog(
+                onDismissRequest = {
+                    completionError = ""
+                },
+                containerColor = DarkCard,
+                title = {
+                    Text(
+                        "Gagal Mengirim Pesanan",
+                        color = Red
+                    )
+                },
+                text = {
+                    Text(
+                        completionError,
+                        color = White
+                    )
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            completionError = ""
+                        }
+                    ) {
+                        Text("Mengerti", color = Purple)
+                    }
+                }
+            )
+        }
 
         return
     }
@@ -247,6 +341,7 @@ fun OrderHomeScreen(
         Button(
             onClick = {
                 selected = null
+                completionError = ""
                 showForm = true
             },
             modifier = Modifier
@@ -393,6 +488,7 @@ fun OrderHomeScreen(
                         order = order,
                         onClick = {
                             selected = order
+                            completionError = ""
                             showForm = true
                         },
                         onToggleLock = {
@@ -425,7 +521,7 @@ fun OrderHomeScreen(
             },
             text = {
                 Text(
-                    "Pesanan berhasil ditandai selesai di aplikasi.",
+                    "Pesanan berhasil dikirim ke website dan stok telah diperbarui.",
                     color = White
                 )
             },
@@ -499,7 +595,9 @@ fun OrderEditor(
     var productExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
+
     val dateState = rememberDatePickerState()
+
     val selectedProduct = products.find {
         it.id == productId
     }
@@ -562,6 +660,14 @@ fun OrderEditor(
                 color = Red
             )
             return@Column
+        }
+
+        if (order?.synced == true) {
+            Text(
+                "Pesanan ini sudah berhasil dikirim ke website.",
+                color = Green,
+                fontSize = 13.sp
+            )
         }
 
         Text("Platform", color = Grey)
@@ -659,7 +765,9 @@ fun OrderEditor(
         }
 
         if (loadingProducts) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
                 CircularProgressIndicator(
                     modifier = Modifier.size(18.dp),
                     color = Purple,
@@ -731,7 +839,6 @@ fun OrderEditor(
         )
 
         if (showDatePicker) {
-
             DatePickerDialog(
                 onDismissRequest = {
                     showDatePicker = false
@@ -789,8 +896,7 @@ fun OrderEditor(
             modifier = Modifier.fillMaxWidth(),
             colors = fieldColors()
         )
-
-        ExposedDropdownMenuBox(
+                ExposedDropdownMenuBox(
             expanded = cityExpanded,
             onExpandedChange = {
                 cityExpanded = !cityExpanded
@@ -863,7 +969,10 @@ fun OrderEditor(
         )
 
         if (error.isNotBlank()) {
-            Text(error, color = Red)
+            Text(
+                error,
+                color = Red
+            )
         }
 
         Button(
@@ -871,14 +980,19 @@ fun OrderEditor(
                 error = when {
                     selectedProduct == null ->
                         "Pilih produk terlebih dahulu."
+
                     quantity <= 0 ->
                         "Jumlah harus lebih dari 0."
+
                     quantity > stock ->
                         "Stok tidak mencukupi. Tersedia: $stock."
+
                     orderNumber.isBlank() ->
                         "Nomor pesanan wajib diisi."
+
                     orderDate.isBlank() ->
                         "Tanggal pesanan wajib dipilih."
+
                     else -> ""
                 }
 
@@ -914,32 +1028,50 @@ fun OrderEditor(
         Button(
             onClick = {
                 error = when {
+                    order?.synced == true ->
+                        "Pesanan ini sudah pernah dikirim ke website."
+
                     selectedProduct == null ->
                         "Pilih produk terlebih dahulu."
+
                     quantity <= 0 ->
                         "Jumlah harus lebih dari 0."
+
                     quantity > stock ->
                         "Stok tidak mencukupi."
+
                     orderNumber.isBlank() ->
                         "Nomor pesanan wajib diisi."
+
                     orderDate.isBlank() ->
                         "Tanggal pesanan wajib dipilih."
+
                     courier.isBlank() ->
                         "Kurir wajib diisi."
+
                     tracking.isBlank() ->
                         "Nomor resi wajib diisi."
+
                     city.isBlank() ->
                         "Tujuan wajib diisi."
+
                     recipient.isBlank() ->
                         "Nama penerima wajib diisi."
+
                     phone.isBlank() ->
                         "Nomor HP wajib diisi."
+
                     address.isBlank() ->
                         "Alamat wajib diisi."
+
                     else -> ""
                 }
 
-                if (error.isBlank() && selectedProduct != null) {
+                if (
+                    error.isBlank() &&
+                    selectedProduct != null &&
+                    order?.synced != true
+                ) {
                     onComplete(
                         createOrder(
                             old = order,
@@ -958,14 +1090,23 @@ fun OrderEditor(
                     )
                 }
             },
+            enabled = order?.synced != true,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp),
             colors = ButtonDefaults.buttonColors(
-                containerColor = Green
+                containerColor = Green,
+                disabledContainerColor = DarkCard
             )
         ) {
-            Text("Dah Kelar Bre", color = Black)
+            Text(
+                if (order?.synced == true) {
+                    "Sudah Dikirim ke Website"
+                } else {
+                    "Dah Kelar Bre"
+                },
+                color = if (order?.synced == true) Grey else Black
+            )
         }
 
         OutlinedButton(
@@ -976,7 +1117,6 @@ fun OrderEditor(
         }
     }
 }
-
 private fun createOrder(
     old: OrderData?,
     platform: String,
@@ -1011,6 +1151,7 @@ private fun createOrder(
         synced = old?.synced ?: false
     )
 }
+
 @Composable
 fun OrderCard(
     order: OrderData,
