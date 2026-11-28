@@ -4,6 +4,7 @@ package com.capstify.adminz
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -11,7 +12,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -58,41 +58,66 @@ private fun CapstifyApp(api: CapstifyApi) {
     val context = androidx.compose.ui.platform.LocalContext.current
     val scope = rememberCoroutineScope()
 
-    var loggedIn by remember {
-        mutableStateOf(false)
-    }
-
-    var checkingSession by remember {
-        mutableStateOf(true)
-    }
-
-    var username by remember {
-        mutableStateOf("")
-    }
-
-    var password by remember {
-        mutableStateOf("")
-    }
-
-    var userName by remember {
-        mutableStateOf("")
-    }
-
-    var loading by remember {
-        mutableStateOf(false)
-    }
-
-    var message by remember {
-        mutableStateOf("")
-    }
+    var loggedIn by remember { mutableStateOf(false) }
+    var checkingSession by remember { mutableStateOf(true) }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    var userName by remember { mutableStateOf("") }
+    var loading by remember { mutableStateOf(false) }
+    var message by remember { mutableStateOf("") }
 
     var orders by remember {
         mutableStateOf(OrderStorage.load(context))
     }
 
+    var products by remember {
+        mutableStateOf<List<ProductData>>(emptyList())
+    }
+
+    var loadingProducts by remember {
+        mutableStateOf(false)
+    }
+
     fun saveOrders(updated: List<OrderData>) {
         orders = updated
         OrderStorage.save(context, updated)
+    }
+
+    suspend fun loadProducts() {
+        loadingProducts = true
+
+        try {
+            val result = withContext(Dispatchers.IO) {
+                api.get("/api/products")
+            }
+
+            val array = result.optJSONArray("products")
+            val loaded = mutableListOf<ProductData>()
+
+            if (array != null) {
+                for (i in 0 until array.length()) {
+                    val item = array.optJSONObject(i) ?: continue
+
+                    loaded.add(
+                        ProductData(
+                            id = item.optLong("id"),
+                            sku = item.optString("sku"),
+                            name = item.optString("name"),
+                            variant = item.optString("variant"),
+                            price = item.optDouble("price"),
+                            stock = item.optInt("stock")
+                        )
+                    )
+                }
+            }
+
+            products = loaded
+
+        } catch (e: Exception) {
+            message = e.message ?: "Gagal mengambil daftar produk."
+        }
+
+        loadingProducts = false
     }
 
     LaunchedEffect(Unit) {
@@ -106,6 +131,7 @@ private fun CapstifyApp(api: CapstifyApi) {
                 .orEmpty()
 
             loggedIn = true
+            loadProducts()
 
         } catch (_: Exception) {
             loggedIn = false
@@ -121,11 +147,8 @@ private fun CapstifyApp(api: CapstifyApi) {
                 .background(AppBlack),
             contentAlignment = Alignment.Center
         ) {
-            CircularProgressIndicator(
-                color = AppPurple
-            )
+            CircularProgressIndicator(color = AppPurple)
         }
-
         return
     }
 
@@ -135,15 +158,8 @@ private fun CapstifyApp(api: CapstifyApi) {
             password = password,
             loading = loading,
             message = message,
-
-            onUsernameChange = {
-                username = it
-            },
-
-            onPasswordChange = {
-                password = it
-            },
-
+            onUsernameChange = { username = it },
+            onPasswordChange = { password = it },
             onLogin = {
                 scope.launch {
                     loading = true
@@ -166,28 +182,30 @@ private fun CapstifyApp(api: CapstifyApi) {
 
                         loggedIn = true
                         password = ""
+                        loadProducts()
 
                     } catch (e: Exception) {
-                        message = e.message
-                            ?: "Login gagal."
+                        message = e.message ?: "Login gagal."
                     }
 
                     loading = false
                 }
             }
         )
-
         return
     }
 
     OrderHomeScreen(
         userName = userName,
         orders = orders,
-
+        products = products,
+        loadingProducts = loadingProducts,
+        onRefreshProducts = {
+            scope.launch { loadProducts() }
+        },
         onOrdersChanged = { updated ->
             saveOrders(updated)
         },
-
         onLogout = {
             scope.launch {
                 try {
@@ -198,11 +216,11 @@ private fun CapstifyApp(api: CapstifyApi) {
                 }
 
                 api.clearSession()
-
                 loggedIn = false
                 username = ""
                 password = ""
                 userName = ""
+                products = emptyList()
             }
         }
     )
