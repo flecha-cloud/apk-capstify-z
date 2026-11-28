@@ -506,6 +506,9 @@ private fun OrderCard(
 @Composable
 private fun OrderEditor(
     initial: OrderData?,
+    products: List<ProductData>,
+    loadingProducts: Boolean,
+    onRefreshProducts: () -> Unit,
     onSave: (OrderData) -> Unit,
     onDelete: (OrderData) -> Unit,
     onComplete: (OrderData) -> Unit,
@@ -514,9 +517,19 @@ private fun OrderEditor(
     var platform by remember {
         mutableStateOf(initial?.platform ?: "Shopee")
     }
-    var product by remember {
-        mutableStateOf(initial?.product ?: "")
-    }
+    var productMenuExpanded by remember {
+    mutableStateOf(false)
+}
+
+var selectedProductId by remember {
+    mutableLongStateOf(initial?.productId ?: 0L)
+}
+
+val selectedProduct = products.firstOrNull {
+    it.id == selectedProductId
+} ?: products.firstOrNull {
+    it.displayName == product
+}
     var quantity by remember {
         mutableStateOf(initial?.quantity ?: "1")
     }
@@ -614,12 +627,83 @@ private fun OrderEditor(
             !locked
         )
 
-        FormField(
-            "Nama Produk",
-            product,
-            { product = it },
-            !locked
-        )
+        Box {
+    OutlinedTextField(
+        value = product,
+        onValueChange = {},
+        readOnly = true,
+        enabled = !locked,
+        modifier = Modifier.fillMaxWidth(),
+        label = { Text("Pilih Produk") },
+        placeholder = { Text("Pilih dari daftar website") },
+        trailingIcon = {
+            IconButton(
+                onClick = {
+                    productMenuExpanded = true
+                },
+                enabled = !locked
+            ) {
+                Icon(
+                    Icons.Default.ArrowDropDown,
+                    contentDescription = "Pilih produk",
+                    tint = Purple
+                )
+            }
+        },
+        colors = fieldColors()
+    )
+
+    DropdownMenu(
+        expanded = productMenuExpanded && !locked,
+        onDismissRequest = {
+            productMenuExpanded = false
+        },
+        modifier = Modifier
+            .fillMaxWidth(0.9f)
+            .background(Card)
+    ) {
+        if (loadingProducts) {
+            DropdownMenuItem(
+                text = { Text("Memuat produk...", color = White) },
+                onClick = {},
+                enabled = false
+            )
+        } else if (products.isEmpty()) {
+            DropdownMenuItem(
+                text = { Text("Produk belum tersedia", color = White) },
+                onClick = {},
+                enabled = false
+            )
+        } else {
+            products.forEach { item ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(item.displayName, color = White)
+                            Text(
+                                "Stok: ${item.stock} · Harga: ${item.price}",
+                                color = Grey,
+                                fontSize = 11.sp
+                            )
+                        }
+                    },
+                    onClick = {
+                        product = item.displayName
+                        selectedProductId = item.id
+                        price = item.price.toString()
+                        productMenuExpanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+if (products.isEmpty() && !loadingProducts && !locked) {
+    TextButton(onClick = onRefreshProducts) {
+        Text("Muat Ulang Produk", color = Purple)
+    }
+}
 
         FormField(
             "Jumlah Produk",
@@ -847,6 +931,7 @@ private fun buildOrder(
         address = address,
         status = status,
         locked = locked
+        productId = selectedProductId
     )
 }
 
