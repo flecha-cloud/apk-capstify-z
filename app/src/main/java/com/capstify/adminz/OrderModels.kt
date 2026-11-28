@@ -5,6 +5,18 @@ import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 
+data class ProductData(
+    val id: Long,
+    val sku: String,
+    val name: String,
+    val variant: String = "",
+    val price: Double = 0.0,
+    val stock: Int = 0
+) {
+    val displayName: String
+        get() = if (variant.isBlank()) name else "$name - $variant"
+}
+
 data class OrderData(
     val id: Long,
     val platform: String,
@@ -19,7 +31,10 @@ data class OrderData(
     val recipient: String = "",
     val address: String = "",
     val status: String = "Packing Dulu Bre",
-    val locked: Boolean = false
+    val locked: Boolean = false,
+    val productId: Long = 0L,
+    val customerPhone: String = "",
+    val synced: Boolean = false
 )
 
 object OrderStorage {
@@ -64,7 +79,10 @@ object OrderStorage {
                                 "status",
                                 "Packing Dulu Bre"
                             ),
-                            locked = item.optBoolean("locked", false)
+                            locked = item.optBoolean("locked", false),
+                            productId = item.optLong("productId", 0L),
+                            customerPhone = item.optString("customerPhone"),
+                            synced = item.optBoolean("synced", false)
                         )
                     )
                 }
@@ -96,6 +114,9 @@ object OrderStorage {
                 put("address", order.address)
                 put("status", order.status)
                 put("locked", order.locked)
+                put("productId", order.productId)
+                put("customerPhone", order.customerPhone)
+                put("synced", order.synced)
             }
 
             jsonArray.put(item)
