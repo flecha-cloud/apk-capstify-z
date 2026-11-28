@@ -498,7 +498,7 @@ fun OrderEditor(
     var productExpanded by remember { mutableStateOf(false) }
     var cityExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-
+    val dateState = rememberDatePickerState()
     val selectedProduct = products.find {
         it.id == productId
     }
@@ -730,7 +730,6 @@ fun OrderEditor(
         )
 
         if (showDatePicker) {
-            val dateState = rememberDatePickerState()
 
             DatePickerDialog(
                 onDismissRequest = {
