@@ -127,9 +127,12 @@ fun LoginScreen(
 fun OrderHomeScreen(
     userName: String,
     orders: List<OrderData>,
+    products: List<ProductData>,
+    loadingProducts: Boolean,
+    onRefreshProducts: () -> Unit,
     onOrdersChanged: (List<OrderData>) -> Unit,
     onLogout: () -> Unit
-) {
+)
     var search by remember { mutableStateOf("") }
     var filter by remember { mutableStateOf("Semua") }
     var selected by remember { mutableStateOf<OrderData?>(null) }
@@ -138,7 +141,10 @@ fun OrderHomeScreen(
 
     if (showForm) {
         OrderEditor(
-            initial = selected,
+    initial = selected,
+    products = products,
+    loadingProducts = loadingProducts,
+    onRefreshProducts = onRefreshProducts,
             onSave = { order ->
                 val updated = if (selected == null) {
                     orders + order
