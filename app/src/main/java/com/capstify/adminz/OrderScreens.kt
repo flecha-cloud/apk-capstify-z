@@ -20,14 +20,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 private val Black = Color(0xFF000000)
 private val Purple = Color(0xFF760FFA)
 private val White = Color(0xFFFFFFFF)
 private val Grey = Color(0xFFAAA3B5)
-private val Card = Color(0xFF17131F)
+private val DarkCard = Color(0xFF17131F)
 private val Green = Color(0xFF43D69B)
 private val Red = Color(0xFFFF6262)
 
@@ -49,21 +53,21 @@ fun LoginScreen(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "CAPSTIFY",
+            "CAPSTIFY",
             color = Purple,
             fontSize = 15.sp,
             fontWeight = FontWeight.Bold
         )
 
         Text(
-            text = "Admin Z",
+            "Admin Z",
             color = White,
             fontSize = 36.sp,
             fontWeight = FontWeight.ExtraBold
         )
 
         Text(
-            text = "Order Management",
+            "Order Management",
             color = Grey
         )
 
@@ -92,8 +96,9 @@ fun LoginScreen(
 
         if (message.isNotBlank()) {
             Spacer(Modifier.height(10.dp))
+
             Text(
-                text = message,
+                message,
                 color = Red,
                 fontSize = 12.sp
             )
@@ -115,7 +120,7 @@ fun LoginScreen(
             shape = RoundedCornerShape(12.dp)
         ) {
             Text(
-                text = if (loading) "Memproses..." else "Masuk",
+                if (loading) "Memproses..." else "Masuk",
                 fontWeight = FontWeight.Bold
             )
         }
@@ -140,7 +145,7 @@ fun OrderHomeScreen(
 
     if (showForm) {
         OrderEditor(
-            initial = selected,
+            order = selected,
             products = products,
             loadingProducts = loadingProducts,
             onRefreshProducts = onRefreshProducts,
@@ -157,20 +162,16 @@ fun OrderHomeScreen(
                 showForm = false
                 selected = null
             },
-            onDelete = { order ->
-                onOrdersChanged(
-                    orders.filterNot { it.id == order.id }
+            onComplete = { order ->
+                val completed = order.copy(
+                    status = "Dah Kelar Bre"
                 )
 
-                showForm = false
-                selected = null
-            },
-            onComplete = { order ->
                 val updated = if (selected == null) {
-                    orders + order
+                    orders + completed
                 } else {
                     orders.map {
-                        if (it.id == order.id) order else it
+                        if (it.id == completed.id) completed else it
                     }
                 }
 
@@ -179,7 +180,7 @@ fun OrderHomeScreen(
                 selected = null
                 celebration = true
             },
-            onBack = {
+            onCancel = {
                 showForm = false
                 selected = null
             }
@@ -193,37 +194,48 @@ fun OrderHomeScreen(
             .fillMaxSize()
             .background(Black)
             .statusBarsPadding()
+            .navigationBarsPadding()
             .padding(16.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.weight(1f)
+            ) {
                 Text(
-                    text = "CAPSTIFY",
+                    "CAPSTIFY",
                     color = Purple,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    text = "Pesanan",
+                    "Pesanan",
                     color = White,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Bold
                 )
 
                 Text(
-                    text = "Halo, ${userName.ifBlank { "Admin" }}",
+                    "Halo, ${userName.ifBlank { "Admin" }}",
                     color = Grey,
                     fontSize = 12.sp
                 )
             }
 
+            IconButton(onClick = onRefreshProducts) {
+                Icon(
+                    Icons.Default.Refresh,
+                    contentDescription = "Refresh produk",
+                    tint = Grey
+                )
+            }
+
             IconButton(onClick = onLogout) {
                 Icon(
-                    imageVector = Icons.Default.Logout,
+                    Icons.Default.Logout,
                     contentDescription = "Keluar",
                     tint = Grey
                 )
@@ -237,7 +249,9 @@ fun OrderHomeScreen(
                 selected = null
                 showForm = true
             },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp),
             colors = ButtonDefaults.buttonColors(
                 containerColor = Purple
             ),
@@ -311,7 +325,7 @@ fun OrderHomeScreen(
         Spacer(Modifier.height(12.dp))
 
         Text(
-            text = "${orders.size} pesanan tersimpan",
+            "${orders.size} pesanan tersimpan",
             color = Grey,
             fontSize = 12.sp
         )
@@ -322,7 +336,7 @@ fun OrderHomeScreen(
             val matchesFilter =
                 filter == "Semua" || order.status == filter
 
-            val searchable = listOf(
+            val matchesSearch = listOf(
                 order.product,
                 order.orderNumber,
                 order.recipient,
@@ -332,19 +346,21 @@ fun OrderHomeScreen(
                 it.contains(search, ignoreCase = true)
             }
 
-            matchesFilter && searchable
+            matchesFilter && matchesSearch
         }
 
         if (filtered.isEmpty()) {
             Box(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize()
+                    .weight(1f),
                 contentAlignment = Alignment.Center
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Icon(
-                        imageVector = Icons.Default.Inventory2,
+                        Icons.Default.Inventory2,
                         contentDescription = null,
                         tint = Grey,
                         modifier = Modifier.size(48.dp)
@@ -353,12 +369,12 @@ fun OrderHomeScreen(
                     Spacer(Modifier.height(10.dp))
 
                     Text(
-                        text = "Belum ada pesanan",
+                        "Belum ada pesanan",
                         color = Grey
                     )
 
                     Text(
-                        text = "Tekan Tambah Pesanan untuk memulai.",
+                        "Tekan Tambah Pesanan untuk memulai.",
                         color = Grey,
                         fontSize = 12.sp
                     )
@@ -366,16 +382,30 @@ fun OrderHomeScreen(
             }
         } else {
             LazyColumn(
+                modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(
                     items = filtered,
                     key = { it.id }
                 ) { order ->
-                    OrderCard(order) {
-                        selected = order
-                        showForm = true
-                    }
+                    OrderCard(
+                        order = order,
+                        onClick = {
+                            selected = order
+                            showForm = true
+                        },
+                        onToggleLock = {
+                            val updated = orders.map {
+                                if (it.id == order.id) {
+                                    it.copy(locked = !it.locked)
+                                } else {
+                                    it
+                                }
+                            }
+                            onOrdersChanged(updated)
+                        }
+                    )
                 }
             }
         }
@@ -386,16 +416,16 @@ fun OrderHomeScreen(
             onDismissRequest = {
                 celebration = false
             },
-            containerColor = Card,
+            containerColor = DarkCard,
             title = {
                 Text(
-                    text = "Dah Kelar Bre! 🎉",
+                    "Dah Kelar Bre! 🎉",
                     color = Purple
                 )
             },
             text = {
                 Text(
-                    text = "Pesanan berhasil ditandai selesai di aplikasi.",
+                    "Pesanan berhasil ditandai selesai di aplikasi.",
                     color = White
                 )
             },
@@ -413,402 +443,68 @@ fun OrderHomeScreen(
 fun OrderEditor(
     order: OrderData?,
     products: List<ProductData>,
+    loadingProducts: Boolean,
+    onRefreshProducts: () -> Unit,
     onSave: (OrderData) -> Unit,
+    onComplete: (OrderData) -> Unit,
     onCancel: () -> Unit
 ) {
-    var platform by remember {
+    var platform by remember(order?.id) {
         mutableStateOf(order?.platform ?: "TikTok")
     }
-    var productName by remember {
-        mutableStateOf(order?.product ?: "")
+
+    var productId by remember(order?.id) {
+        mutableStateOf(order?.productId ?: 0L)
     }
-    var selectedProductId by remember {
-        mutableStateOf(order?.productId ?: 0)
+
+    var quantityText by remember(order?.id) {
+        mutableStateOf(order?.quantity ?: "1")
     }
-    var quantityText by remember {
-        mutableStateOf(order?.quantity?.toString() ?: "1")
-    }
-    var orderNumber by remember {
+
+    var orderNumber by remember(order?.id) {
         mutableStateOf(order?.orderNumber ?: "")
     }
-    var orderDate by remember {
+
+    var orderDate by remember(order?.id) {
         mutableStateOf(order?.orderDate ?: "")
     }
+
+    var courier by remember(order?.id) {
+        mutableStateOf(order?.courier ?: "")
+    }
+
+    var tracking by remember(order?.id) {
+        mutableStateOf(order?.tracking ?: "")
+    }
+
+    var city by remember(order?.id) {
+        mutableStateOf(order?.city ?: "")
+    }
+
+    var recipient by remember(order?.id) {
+        mutableStateOf(order?.recipient ?: "")
+    }
+
+    var phone by remember(order?.id) {
+        mutableStateOf(order?.customerPhone ?: "")
+    }
+
+    var address by remember(order?.id) {
+        mutableStateOf(order?.address ?: "")
+    }
+
+    var error by remember { mutableStateOf("") }
+    var platformExpanded by remember { mutableStateOf(false) }
+    var productExpanded by remember { mutableStateOf(false) }
+    var cityExpanded by remember { mutableStateOf(false) }
     var showDatePicker by remember { mutableStateOf(false) }
-    var expandedPlatform by remember { mutableStateOf(false) }
-    var expandedProduct by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
 
     val selectedProduct = products.find {
-        it.id == selectedProductId
-    } ?: products.find {
-        it.name == productName
+        it.id == productId
     }
 
     val quantity = quantityText.toIntOrNull() ?: 0
-    val availableStock = selectedProduct?.stock ?: 0
-
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(Black)
-            .verticalScroll(rememberScrollState())
-            .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
-    ) {
-        Text(
-            text = if (order == null) "Pesanan Baru" else "Edit Pesanan",
-            color = White,
-            fontSize = 23.sp,
-            fontWeight = FontWeight.Bold
-        )
-
-        Text("Platform", color = Grey)
-
-        ExposedDropdownMenuBox(
-            expanded = expandedPlatform,
-            onExpandedChange = { expandedPlatform = !expandedPlatform }
-        ) {
-            OutlinedTextField(
-                value = platform,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Pilih platform") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = expandedPlatform
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                colors = fieldColors()
-            )
-
-            ExposedDropdownMenu(
-                expanded = expandedPlatform,
-                onDismissRequest = { expandedPlatform = false }
-            ) {
-                listOf("TikTok", "Shopee", "Web").forEach {
-                    DropdownMenuItem(
-                        text = { Text(it) },
-                        onClick = {
-                            platform = it
-                            expandedPlatform = false
-                        }
-                    )
-                }
-            }
-        }
-
-        Text("Produk", color = Grey)
-
-        ExposedDropdownMenuBox(
-            expanded = expandedProduct,
-            onExpandedChange = { expandedProduct = !expandedProduct }
-        ) {
-            OutlinedTextField(
-                value = selectedProduct?.let {
-                    "${it.name} - Stok: ${it.stock}"
-                } ?: productName,
-                onValueChange = {},
-                readOnly = true,
-                label = { Text("Pilih produk") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(
-                        expanded = expandedProduct
-                    )
-                },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .menuAnchor(),
-                colors = fieldColors()
-            )
-
-            ExposedDropdownMenu(
-                expanded = expandedProduct,
-                onDismissRequest = { expandedProduct = false }
-            ) {
-                products.forEach { product ->
-                    DropdownMenuItem(
-                        text = {
-                            Column {
-                                Text(product.name)
-                                Text(
-                                    "Stok tersedia: ${product.stock}",
-                                    color = Grey,
-                                    fontSize = 12.sp
-                                )
-                            }
-                        },
-                        onClick = {
-                            productName = product.name
-                            selectedProductId = product.id
-                            expandedProduct = false
-                        }
-                    )
-                }
-            }
-        }
-
-        OutlinedTextField(
-            value = quantityText,
-            onValueChange = {
-                quantityText = it.filter { char -> char.isDigit() }
-            },
-            label = { Text("Jumlah") },
-            keyboardOptions = KeyboardOptions(
-                keyboardType = KeyboardType.Number
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors()
-        )
-
-        if (selectedProduct != null) {
-            Text(
-                text = "Stok tersedia: ${selectedProduct.stock}",
-                color = if (quantity > availableStock) Red else Green,
-                fontSize = 13.sp
-            )
-        }
-
-        OutlinedTextField(
-            value = orderNumber,
-            onValueChange = { orderNumber = it },
-            label = { Text("Nomor pesanan") },
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors()
-        )
-
-        OutlinedTextField(
-            value = orderDate,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Tanggal pesanan") },
-            trailingIcon = {
-                IconButton(onClick = { showDatePicker = true }) {
-                    Icon(
-                        Icons.Default.CalendarMonth,
-                        contentDescription = "Pilih tanggal",
-                        tint = Purple
-                    )
-                }
-            },
-            modifier = Modifier.fillMaxWidth(),
-            colors = fieldColors()
-        )
-
-        if (showDatePicker) {
-            val datePickerState = rememberDatePickerState()
-
-            DatePickerDialog(
-                onDismissRequest = { showDatePicker = false },
-                confirmButton = {
-                    TextButton(
-                        onClick = {
-                            datePickerState.selectedDateMillis?.let {
-                                val date = java.text.SimpleDateFormat(
-                                    "dd-MM-yyyy",
-                                    java.util.Locale("id", "ID")
-                                ).format(java.util.Date(it))
-                                orderDate = date
-                            }
-                            showDatePicker = false
-                        }
-                    ) {
-                        Text("Pilih", color = Purple)
-                    }
-                },
-                dismissButton = {
-                    TextButton(
-                        onClick = { showDatePicker = false }
-                    ) {
-                        Text("Batal", color = Grey)
-                    }
-                }
-            ) {
-                DatePicker(state = datePickerState)
-            }
-        }
-
-        if (errorMessage.isNotBlank()) {
-            Text(errorMessage, color = Red)
-        }
-
-        Button(
-            onClick = {
-                errorMessage = when {
-                    selectedProduct == null ->
-                        "Pilih produk terlebih dahulu."
-
-                    quantity <= 0 ->
-                        "Jumlah pesanan harus lebih dari 0."
-
-                    quantity > availableStock ->
-                        "Stok tidak mencukupi. Stok tersedia: $availableStock."
-
-                    orderNumber.isBlank() ->
-                        "Nomor pesanan wajib diisi."
-
-                    orderDate.isBlank() ->
-                        "Tanggal pesanan wajib dipilih."
-
-                    else -> ""
-                }
-
-                if (errorMessage.isBlank() && selectedProduct != null) {
-                    val savedOrder = buildOrder(
-                        oldOrder = order,
-                        platform = platform,
-                        product = selectedProduct,
-                        quantity = quantity,
-                        orderNumber = orderNumber,
-                        orderDate = orderDate
-                    )
-                    onSave(savedOrder)
-                }
-            },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(52.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Purple
-            )
-        ) {
-            Text("Simpan Pesanan", color = White)
-        }
-
-        OutlinedButton(
-            onClick = onCancel,
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Text("Batal", color = White)
-        }
-    }
-}
-
-private fun buildOrder(
-    oldOrder: OrderData?,
-    platform: String,
-    product: ProductData,
-    quantity: Int,
-    orderNumber: String,
-    orderDate: String
-): OrderData {
-    return OrderData(
-        id = oldOrder?.id ?: java.util.UUID.randomUUID().toString(),
-        platform = platform,
-        product = product.name,
-        quantity = quantity,
-        price = product.price,
-        orderNumber = orderNumber,
-        orderDate = orderDate,
-        courier = oldOrder?.courier ?: "",
-        tracking = oldOrder?.tracking ?: "",
-        city = oldOrder?.city ?: "",
-        recipient = oldOrder?.recipient ?: "",
-        address = oldOrder?.address ?: "",
-        status = oldOrder?.status ?: "Pesanan Baru",
-        locked = oldOrder?.locked ?: false,
-        productId = product.id,
-        customerPhone = oldOrder?.customerPhone ?: "",
-        synced = oldOrder?.synced ?: false
-    )
-}
-@Composable
-fun OrderCard(
-    order: OrderData,
-    onClick: () -> Unit,
-    onToggleLock: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(
-            containerColor = DarkCard
-        ),
-        shape = RoundedCornerShape(16.dp)
-    ) {
-        Column(
-            modifier = Modifier.padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    order.orderNumber,
-                    color = White,
-                    fontWeight = FontWeight.Bold
-                )
-
-                IconButton(onClick = onToggleLock) {
-                    Icon(
-                        imageVector = if (order.locked) {
-                            Icons.Default.Lock
-                        } else {
-                            Icons.Default.LockOpen
-                        },
-                        contentDescription = if (order.locked) {
-                            "Buka kunci pesanan"
-                        } else {
-                            "Kunci pesanan"
-                        },
-                        tint = if (order.locked) Purple else Grey
-                    )
-                }
-            }
-
-            Text(
-                "${order.platform} • ${order.product}",
-                color = White
-            )
-
-            Text(
-                "Jumlah: ${order.quantity}",
-                color = Grey
-            )
-
-            Text(
-                "Status: ${order.status}",
-                color = Purple
-            )
-
-            if (order.locked) {
-                Text(
-                    "Pesanan terkunci. Tekan ikon gembok untuk membuka.",
-                    color = Grey,
-                    fontSize = 12.sp
-                )
-            } else {
-                Button(
-                    onClick = onClick,
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Purple
-                    )
-                ) {
-                    Text("Buka Pesanan", color = White)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun ShippingEditor(
-    order: OrderData,
-    onSave: (OrderData) -> Unit,
-    onCancel: () -> Unit
-) {
-    var courier by remember { mutableStateOf(order.courier) }
-    var tracking by remember { mutableStateOf(order.tracking) }
-    var city by remember { mutableStateOf(order.city) }
-    var recipient by remember { mutableStateOf(order.recipient) }
-    var phone by remember { mutableStateOf(order.customerPhone) }
-    var address by remember { mutableStateOf(order.address) }
-    var error by remember { mutableStateOf("") }
+    val stock = selectedProduct?.stock ?: 0
 
     val cities = listOf(
         "Jakarta",
@@ -830,23 +526,251 @@ fun ShippingEditor(
         "Pontianak",
         "Banjarmasin",
         "Pekanbaru",
-        "Padang"
+        "Padang",
+        "Batam",
+        "Cirebon",
+        "Kediri",
+        "Madiun",
+        "Jambi",
+        "Manado",
+        "Samarinda",
+        "Ambon",
+        "Jayapura"
     )
-
-    var cityExpanded by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Black)
+            .statusBarsPadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState())
             .padding(20.dp),
-        verticalArrangement = Arrangement.spacedBy(14.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
+        Text(
+            if (order == null) "Pesanan Baru" else "Detail Pesanan",
+            color = White,
+            fontSize = 23.sp,
+            fontWeight = FontWeight.Bold
+        )
+
+        if (order?.locked == true) {
+            Text(
+                "Pesanan ini terkunci. Buka kunci dari daftar pesanan untuk mengedit.",
+                color = Red
+            )
+            return@Column
+        }
+
+        Text("Platform", color = Grey)
+
+        ExposedDropdownMenuBox(
+            expanded = platformExpanded,
+            onExpandedChange = {
+                platformExpanded = !platformExpanded
+            }
+        ) {
+            OutlinedTextField(
+                value = platform,
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Pilih platform") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = platformExpanded
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                colors = fieldColors()
+            )
+
+            ExposedDropdownMenu(
+                expanded = platformExpanded,
+                onDismissRequest = {
+                    platformExpanded = false
+                }
+            ) {
+                listOf("TikTok", "Shopee", "Web").forEach {
+                    DropdownMenuItem(
+                        text = { Text(it) },
+                        onClick = {
+                            platform = it
+                            platformExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        Text("Produk", color = Grey)
+
+        ExposedDropdownMenuBox(
+            expanded = productExpanded,
+            onExpandedChange = {
+                productExpanded = !productExpanded
+            }
+        ) {
+            OutlinedTextField(
+                value = selectedProduct?.displayName
+                    ?: "Pilih produk",
+                onValueChange = {},
+                readOnly = true,
+                label = { Text("Produk website") },
+                trailingIcon = {
+                    ExposedDropdownMenuDefaults.TrailingIcon(
+                        expanded = productExpanded
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .menuAnchor(),
+                colors = fieldColors()
+            )
+
+            ExposedDropdownMenu(
+                expanded = productExpanded,
+                onDismissRequest = {
+                    productExpanded = false
+                }
+            ) {
+                products.forEach { product ->
+                    DropdownMenuItem(
+                        text = {
+                            Column {
+                                Text(product.displayName)
+                                Text(
+                                    "Stok: ${product.stock}",
+                                    color = Grey,
+                                    fontSize = 12.sp
+                                )
+                            }
+                        },
+                        onClick = {
+                            productId = product.id
+                            productExpanded = false
+                        }
+                    )
+                }
+            }
+        }
+
+        if (loadingProducts) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(18.dp),
+                    color = Purple,
+                    strokeWidth = 2.dp
+                )
+                Spacer(Modifier.width(8.dp))
+                Text("Memuat produk...", color = Grey)
+            }
+        } else if (products.isEmpty()) {
+            Text(
+                "Daftar produk kosong.",
+                color = Red
+            )
+            OutlinedButton(
+                onClick = onRefreshProducts,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("Muat Ulang Produk")
+            }
+        }
+
+        OutlinedTextField(
+            value = quantityText,
+            onValueChange = {
+                quantityText = it.filter { c -> c.isDigit() }
+            },
+            label = { Text("Jumlah") },
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors()
+        )
+
+        if (selectedProduct != null) {
+            Text(
+                "Stok tersedia: $stock",
+                color = if (quantity > stock) Red else Green,
+                fontSize = 13.sp
+            )
+        }
+
+        OutlinedTextField(
+            value = orderNumber,
+            onValueChange = { orderNumber = it },
+            label = { Text("Nomor pesanan") },
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors()
+        )
+
+        OutlinedTextField(
+            value = orderDate,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text("Tanggal pesanan") },
+            trailingIcon = {
+                IconButton(
+                    onClick = { showDatePicker = true }
+                ) {
+                    Icon(
+                        Icons.Default.CalendarMonth,
+                        contentDescription = "Pilih tanggal",
+                        tint = Purple
+                    )
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            colors = fieldColors()
+        )
+
+        if (showDatePicker) {
+            val dateState = rememberDatePickerState()
+
+            DatePickerDialog(
+                onDismissRequest = {
+                    showDatePicker = false
+                },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            dateState.selectedDateMillis?.let {
+                                orderDate = SimpleDateFormat(
+                                    "dd-MM-yyyy",
+                                    Locale("id", "ID")
+                                ).format(Date(it))
+                            }
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("Pilih", color = Purple)
+                    }
+                },
+                dismissButton = {
+                    TextButton(
+                        onClick = {
+                            showDatePicker = false
+                        }
+                    ) {
+                        Text("Batal", color = Grey)
+                    }
+                }
+            ) {
+                DatePicker(state = dateState)
+            }
+        }
+
+        Divider(color = DarkCard)
+
         Text(
             "Informasi Pengiriman",
             color = White,
-            fontSize = 23.sp,
+            fontSize = 19.sp,
             fontWeight = FontWeight.Bold
         )
 
@@ -868,7 +792,9 @@ fun ShippingEditor(
 
         ExposedDropdownMenuBox(
             expanded = cityExpanded,
-            onExpandedChange = { cityExpanded = !cityExpanded }
+            onExpandedChange = {
+                cityExpanded = !cityExpanded
+            }
         ) {
             OutlinedTextField(
                 value = city,
@@ -890,7 +816,9 @@ fun ShippingEditor(
 
             ExposedDropdownMenu(
                 expanded = cityExpanded,
-                onDismissRequest = { cityExpanded = false }
+                onDismissRequest = {
+                    cityExpanded = false
+                }
             ) {
                 cities.filter {
                     it.contains(city, ignoreCase = true)
@@ -929,8 +857,8 @@ fun ShippingEditor(
             value = address,
             onValueChange = { address = it },
             label = { Text("Alamat lengkap") },
-            modifier = Modifier.fillMaxWidth(),
             minLines = 3,
+            modifier = Modifier.fillMaxWidth(),
             colors = fieldColors()
         )
 
@@ -941,25 +869,34 @@ fun ShippingEditor(
         Button(
             onClick = {
                 error = when {
-                    courier.isBlank() -> "Nama kurir wajib diisi."
-                    tracking.isBlank() -> "Nomor resi wajib diisi."
-                    city.isBlank() -> "Tujuan wajib diisi."
-                    recipient.isBlank() -> "Nama penerima wajib diisi."
-                    phone.isBlank() -> "Nomor HP wajib diisi."
-                    address.isBlank() -> "Alamat lengkap wajib diisi."
+                    selectedProduct == null ->
+                        "Pilih produk terlebih dahulu."
+                    quantity <= 0 ->
+                        "Jumlah harus lebih dari 0."
+                    quantity > stock ->
+                        "Stok tidak mencukupi. Tersedia: $stock."
+                    orderNumber.isBlank() ->
+                        "Nomor pesanan wajib diisi."
+                    orderDate.isBlank() ->
+                        "Tanggal pesanan wajib dipilih."
                     else -> ""
                 }
 
-                if (error.isBlank()) {
+                if (error.isBlank() && selectedProduct != null) {
                     onSave(
-                        order.copy(
+                        createOrder(
+                            old = order,
+                            platform = platform,
+                            product = selectedProduct,
+                            quantity = quantity,
+                            orderNumber = orderNumber,
+                            orderDate = orderDate,
                             courier = courier,
                             tracking = tracking,
                             city = city,
                             recipient = recipient,
-                            customerPhone = phone,
-                            address = address,
-                            status = "OTW"
+                            phone = phone,
+                            address = address
                         )
                     )
                 }
@@ -971,72 +908,265 @@ fun ShippingEditor(
                 containerColor = Purple
             )
         ) {
-            Text("OTW Bre", color = White)
+            Text("Simpan Pesanan", color = White)
+        }
+
+        Button(
+            onClick = {
+                error = when {
+                    selectedProduct == null ->
+                        "Pilih produk terlebih dahulu."
+                    quantity <= 0 ->
+                        "Jumlah harus lebih dari 0."
+                    quantity > stock ->
+                        "Stok tidak mencukupi."
+                    orderNumber.isBlank() ->
+                        "Nomor pesanan wajib diisi."
+                    orderDate.isBlank() ->
+                        "Tanggal pesanan wajib dipilih."
+                    courier.isBlank() ->
+                        "Kurir wajib diisi."
+                    tracking.isBlank() ->
+                        "Nomor resi wajib diisi."
+                    city.isBlank() ->
+                        "Tujuan wajib diisi."
+                    recipient.isBlank() ->
+                        "Nama penerima wajib diisi."
+                    phone.isBlank() ->
+                        "Nomor HP wajib diisi."
+                    address.isBlank() ->
+                        "Alamat wajib diisi."
+                    else -> ""
+                }
+
+                if (error.isBlank() && selectedProduct != null) {
+                    onComplete(
+                        createOrder(
+                            old = order,
+                            platform = platform,
+                            product = selectedProduct,
+                            quantity = quantity,
+                            orderNumber = orderNumber,
+                            orderDate = orderDate,
+                            courier = courier,
+                            tracking = tracking,
+                            city = city,
+                            recipient = recipient,
+                            phone = phone,
+                            address = address
+                        ).copy(status = "Dah Kelar Bre")
+                    )
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Green
+            )
+        ) {
+            Text("Dah Kelar Bre", color = Black)
         }
 
         OutlinedButton(
             onClick = onCancel,
             modifier = Modifier.fillMaxWidth()
         ) {
-            Text("Batal", color = White)
+            Text("Kembali", color = White)
         }
     }
 }
 
+private fun createOrder(
+    old: OrderData?,
+    platform: String,
+    product: ProductData,
+    quantity: Int,
+    orderNumber: String,
+    orderDate: String,
+    courier: String,
+    tracking: String,
+    city: String,
+    recipient: String,
+    phone: String,
+    address: String
+): OrderData {
+    return OrderData(
+        id = old?.id ?: System.currentTimeMillis(),
+        platform = platform,
+        product = product.displayName,
+        quantity = quantity.toString(),
+        price = product.price.toString(),
+        orderNumber = orderNumber,
+        orderDate = orderDate,
+        courier = courier,
+        tracking = tracking,
+        city = city,
+        recipient = recipient,
+        address = address,
+        status = old?.status ?: "Packing Dulu Bre",
+        locked = old?.locked ?: false,
+        productId = product.id,
+        customerPhone = phone,
+        synced = old?.synced ?: false
+    )
+}
 @Composable
-fun CompletionScreen(
+fun OrderCard(
     order: OrderData,
-    onComplete: () -> Unit
+    onClick: () -> Unit,
+    onToggleLock: () -> Unit
 ) {
-    Column(
+    Card(
         modifier = Modifier
-            .fillMaxSize()
-            .background(Black)
-            .padding(24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .fillMaxWidth()
+            .clickable(enabled = !order.locked) {
+                onClick()
+            },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = DarkCard
+        )
     ) {
-        Text(
-            "🎉",
-            fontSize = 76.sp
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-
-        Text(
-            "MINUM DULU BRE!",
-            color = Purple,
-            fontSize = 27.sp,
-            fontWeight = FontWeight.ExtraBold
-        )
-
-        Text(
-            "Keren lu. Pesanan ${order.orderNumber} selesai!",
-            color = White,
-            fontSize = 16.sp,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(30.dp))
-
-        Button(
-            onClick = onComplete,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Purple
-            )
+        Column(
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Text("Kembali ke Pesanan", color = White)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        order.orderNumber.ifBlank {
+                            "Pesanan tanpa nomor"
+                        },
+                        color = White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp
+                    )
+
+                    Text(
+                        "${order.platform} • ${order.orderDate}",
+                        color = Grey,
+                        fontSize = 12.sp
+                    )
+                }
+
+                IconButton(
+                    onClick = onToggleLock
+                ) {
+                    Icon(
+                        imageVector = if (order.locked) {
+                            Icons.Default.Lock
+                        } else {
+                            Icons.Default.LockOpen
+                        },
+                        contentDescription = if (order.locked) {
+                            "Buka kunci pesanan"
+                        } else {
+                            "Kunci pesanan"
+                        },
+                        tint = if (order.locked) Red else Green
+                    )
+                }
+            }
+
+            Divider(color = Black)
+
+            Text(
+                order.product,
+                color = White,
+                fontWeight = FontWeight.Medium
+            )
+
+            Text(
+                "Jumlah: ${order.quantity}",
+                color = Grey,
+                fontSize = 13.sp
+            )
+
+            Text(
+                "Penerima: ${order.recipient.ifBlank { "-" }}",
+                color = Grey,
+                fontSize = 13.sp
+            )
+
+            Text(
+                "Kurir: ${order.courier.ifBlank { "-" }}",
+                color = Grey,
+                fontSize = 13.sp
+            )
+
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(50),
+                    color = when (order.status) {
+                        "Dah Kelar Bre" ->
+                            Green.copy(alpha = 0.15f)
+
+                        "OTW Kirim" ->
+                            Purple.copy(alpha = 0.2f)
+
+                        else ->
+                            Grey.copy(alpha = 0.15f)
+                    }
+                ) {
+                    Text(
+                        order.status,
+                        color = when (order.status) {
+                            "Dah Kelar Bre" -> Green
+                            "OTW Kirim" -> Purple
+                            else -> White
+                        },
+                        fontSize = 11.sp,
+                        modifier = Modifier.padding(
+                            horizontal = 12.dp,
+                            vertical = 7.dp
+                        )
+                    )
+                }
+
+                if (order.locked) {
+                    Text(
+                        "TERKUNCI",
+                        color = Red,
+                        fontSize = 11.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Text(
+                        "Ketuk untuk detail",
+                        color = Grey,
+                        fontSize = 11.sp
+                    )
+                }
+            }
         }
     }
 }
 
-@Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedTextColor = White,
-    unfocusedTextColor = White,
-    focusedBorderColor = Purple,
-    unfocusedBorderColor = Grey,
-    focusedLabelColor = Purple,
-    unfocusedLabelColor = Grey,
-    cursorColor = Purple
-)
+private fun fieldColors() =
+    OutlinedTextFieldDefaults.colors(
+        focusedTextColor = White,
+        unfocusedTextColor = White,
+        disabledTextColor = Grey,
+        focusedBorderColor = Purple,
+        unfocusedBorderColor = Grey,
+        focusedLabelColor = Purple,
+        unfocusedLabelColor = Grey,
+        cursorColor = Purple,
+        focusedContainerColor = DarkCard,
+        unfocusedContainerColor = DarkCard,
+        disabledContainerColor = DarkCard,
+        focusedLeadingIconColor = Purple,
+        unfocusedLeadingIconColor = Grey,
+        focusedTrailingIconColor = Purple,
+        unfocusedTrailingIconColor = Grey
+    )
