@@ -517,6 +517,9 @@ private fun OrderEditor(
     var platform by remember {
         mutableStateOf(initial?.platform ?: "Shopee")
     }
+    var product by remember {
+    mutableStateOf(initial?.product ?: "")
+    }
     var productMenuExpanded by remember {
     mutableStateOf(false)
 }
@@ -533,6 +536,8 @@ val selectedProduct = products.firstOrNull {
     var quantity by remember {
         mutableStateOf(initial?.quantity ?: "1")
     }
+    val requestedQuantity = quantity.toIntOrNull() ?: 0
+    val availableStock = selectedProduct?.stock ?: 0
     var price by remember {
         mutableStateOf(initial?.price ?: "")
     }
@@ -782,11 +787,26 @@ if (products.isEmpty() && !loadingProducts && !locked) {
         if (!locked) {
             Button(
                 onClick = {
-                    if (
-                        product.isBlank() ||
-                        orderNumber.isBlank()
-                    ) {
-                        error = "Nama produk dan nomor pesanan wajib diisi."
+    if (selectedProduct == null) {
+        error = "Pilih produk dari daftar website."
+    } else if (requestedQuantity <= 0) {
+        error = "Jumlah produk minimal 1."
+    } else if (requestedQuantity > availableStock) {
+        error = "Stok tidak cukup. Stok tersedia: $availableStock."
+    } else if (orderNumber.isBlank()) {
+        error = "Nomor pesanan wajib diisi."
+    } else {
+        onSave(
+            buildOrder(
+                id, platform, product, quantity,
+                price, orderNumber, orderDate,
+                courier, tracking, city,
+                recipient, address,
+                "Packing Dulu Bre", locked
+            )
+        )
+    }
+},
                     } else {
                         onSave(
                             buildOrder(
@@ -809,27 +829,32 @@ if (products.isEmpty() && !loadingProducts && !locked) {
 
             Button(
                 onClick = {
-                    if (
-                        product.isBlank() ||
-                        orderNumber.isBlank() ||
-                        courier.isBlank() ||
-                        tracking.isBlank() ||
-                        recipient.isBlank() ||
-                        address.isBlank()
-                    ) {
-                        error = "Lengkapi informasi pesanan dan pengiriman."
-                    } else {
-                        onSave(
-                            buildOrder(
-                                id, platform, product, quantity,
-                                price, orderNumber, orderDate,
-                                courier, tracking, city,
-                                recipient, address,
-                                "OTW Kirim", locked
-                            )
-                        )
-                    }
-                },
+    if (selectedProduct == null) {
+        error = "Pilih produk dari daftar website."
+    } else if (requestedQuantity <= 0) {
+        error = "Jumlah produk minimal 1."
+    } else if (requestedQuantity > availableStock) {
+        error = "Stok tidak cukup. Stok tersedia: $availableStock."
+    } else if (
+        orderNumber.isBlank() ||
+        courier.isBlank() ||
+        tracking.isBlank() ||
+        recipient.isBlank() ||
+        address.isBlank()
+    ) {
+        error = "Lengkapi informasi pesanan dan pengiriman."
+    } else {
+        onSave(
+            buildOrder(
+                id, platform, product, quantity,
+                price, orderNumber, orderDate,
+                courier, tracking, city,
+                recipient, address,
+                "OTW Kirim", locked
+            )
+        )
+    }
+},
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Card
@@ -840,24 +865,31 @@ if (products.isEmpty() && !loadingProducts && !locked) {
 
             Button(
                 onClick = {
-                    if (
-                        tracking.isBlank() ||
-                        recipient.isBlank() ||
-                        address.isBlank()
-                    ) {
-                        error = "Lengkapi data pengiriman terlebih dahulu."
-                    } else {
-                        onComplete(
-                            buildOrder(
-                                id, platform, product, quantity,
-                                price, orderNumber, orderDate,
-                                courier, tracking, city,
-                                recipient, address,
-                                "Dah Kelar Bre", locked
-                            )
-                        )
-                    }
-                },
+    if (selectedProduct == null) {
+        error = "Pilih produk dari daftar website."
+    } else if (requestedQuantity <= 0) {
+        error = "Jumlah produk minimal 1."
+    } else if (requestedQuantity > availableStock) {
+        error = "Stok tidak cukup. Stok tersedia: $availableStock."
+    } else if (
+        orderNumber.isBlank() ||
+        tracking.isBlank() ||
+        recipient.isBlank() ||
+        address.isBlank()
+    ) {
+        error = "Lengkapi data pengiriman terlebih dahulu."
+    } else {
+        onComplete(
+            buildOrder(
+                id, platform, product, quantity,
+                price, orderNumber, orderDate,
+                courier, tracking, city,
+                recipient, address,
+                "Dah Kelar Bre", locked
+            )
+        )
+    }
+},
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Green,
@@ -931,7 +963,6 @@ private fun buildOrder(
         address = address,
         status = status,
         locked = locked
-        productId = selectedProductId
     )
 }
 
