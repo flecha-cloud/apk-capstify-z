@@ -1152,6 +1152,7 @@ fun OrderCard(
     }
 }
 
+@Composable
 private fun fieldColors() =
     OutlinedTextFieldDefaults.colors(
         focusedTextColor = White,
